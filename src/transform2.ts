@@ -114,6 +114,9 @@ function getComponentWrapper(_name: string, { type, url }: { type: string; url: 
         return {
           wrapper: `__preact_dynamic(${name}, new URL(${JSON.stringify(url.replace(/\.[^.]+$/, '.js'))}, \`http://TEST\${import.meta.url}\`).pathname, '${resolve('preact')}')`,
           wrapperImport: `import {__preact_dynamic} from '${internalImport('render/preact.js')}';`,
+          clientImports: [
+            internalImport('client/preact.js')
+          ]
         };
       } else {
         return {
@@ -227,9 +230,12 @@ async function convertHmxToJsx(template: string, filename: string, compileOption
             if (!components[componentName]) {
               throw new Error(`Unknown Component: ${componentName}`);
             }
-            const { wrapper, wrapperImport } = getComponentWrapper(name, components[componentName], compileOptions);
+            const { wrapper, wrapperImport, clientImports } = getComponentWrapper(name, components[componentName], compileOptions);
             if (wrapperImport) {
               additionalImports.add(wrapperImport);
+            }
+            if(clientImports) {
+              
             }
             if (wrapper !== name) {
               code = code.slice(0, match.index + 2) + wrapper + code.slice(match.index + match[0].length - 1);
@@ -335,7 +341,13 @@ async function convertHmxToJsx(template: string, filename: string, compileOption
           if (!collectionItem) {
             throw new Error('Not possible! CLOSE ' + node.name);
           }
+
+          if(node.name === 'head') {
+            debugger;
+          }
+
           collectionItem.jsx += ')';
+
           currentDepth--;
           if (currentDepth === 0) {
             collectionItem = undefined;
@@ -412,7 +424,7 @@ export async function compilePage(source: string, filename: string, opts: Compil
   const headItemJsx = !headItem ? 'null' : headItem.jsx.replace('"head"', 'isRoot ? "head" : Fragment');
   const bodyItemJsx = !bodyItem ? 'null' : bodyItem.jsx.replace('"head"', 'isRoot ? "body" : Fragment');
 
-  const modJsx = `
+  const modJsx = /* js */ `
 ${sourceJsx.script}
 
 import { h, Fragment } from '${internalImport('h.js')}';
@@ -431,10 +443,13 @@ export async function compileComponent(source: string, filename: string, opts: C
   if (!componentJsx) {
     throw new Error(`${filename} <Component> expected!`);
   }
-  const modJsx = `
-      import { h, Fragment } from '${internalImport('h.js')}';
-      export default function(props) { return h(Fragment, null, ${componentJsx.jsx}); }
-      `.trim();
+  const modJsx = /* js */ `
+import { h, Fragment } from '${internalImport('h.js')}';
+
+export default function(props) {
+  return h(Fragment, null, ${componentJsx.jsx});
+}
+`.trim();
   return {
     contents: modJsx,
   };

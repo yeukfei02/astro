@@ -18,10 +18,16 @@ export function __preact_static(PreactComponent: Component) {
 export function __preact_dynamic(PreactComponent: Component, importUrl: string, preactUrl: string) {
   const placeholderId = `placeholder_${String(Math.random())}`;
   return (attrs: Record<string, string>, ...children: any) => {
+    debugger;
+
+    return `<preact-island props="${JSON.stringify(attrs)}" component="${importUrl}"></preact-island>`;
+
+    /*
     return `<div id="${placeholderId}"></div><script type="module">
             import {h, render} from '${preactUrl}';
             import Component from '${importUrl}';
             render(h(Component, ${JSON.stringify(attrs)}), document.getElementById('${placeholderId}'));
         </script>`;
+    */
   };
 }
