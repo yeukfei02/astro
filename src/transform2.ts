@@ -51,36 +51,47 @@ async function convertMdToJsx(
   contents: string,
   { compileOptions, filename, fileID }: { compileOptions: CompileOptions; filename: string; fileID: string }
 ): Promise<TransformResult> {
-  const { data: _frontmatterData, content } = matter(contents);
+  let { data: _frontmatterData, content } = matter(contents);
+  const scriptRegex = /<script.*?astro.*?>(.*)<\/script>/gs;
+  let matches: RegExpExecArray[] = [];
+  let match: RegExpExecArray | null | undefined;
+  const regex = new RegExp(scriptRegex);
+  while ((match = regex.exec(content))) {
+    matches.push(match);
+  }
+  content = content.replace(new RegExp(scriptRegex), '');
   const { headers, headersExtension } = createMarkdownHeadersCollector();
   const mdHtml = micromark(content, {
     extensions: [gfmSyntax()],
     htmlExtensions: [gfmHtml, headersExtension],
   });
+  let mdScriptAstro = ``;
+  if (matches.length > 1) {
+    throw new Error('Only 1 <script astro> allowed');
+  } else if (matches.length === 1) {
+    mdScriptAstro = matches[0][1];
+  }
+    const setupContext = {
+      ..._frontmatterData,
+      content: {
+        frontmatter: _frontmatterData,
+        headers,
+        source: content,
+        html: mdHtml,
+      },
+    };
+    // </script> can't be anywhere inside of a JS string, otherwise the HTML parser fails.
+    // Break it up here so that the HTML parser won't detect it.
+    const stringifiedSetupContext = JSON.stringify(setupContext).replace(/\<\/script\>/g, `</scrip" + "t>`);
+    mdScriptAstro = `<script astro>
+    ${mdScriptAstro}
+    ${_frontmatterData.layout ? `export const layout = ${JSON.stringify(_frontmatterData.layout)};` : ''}
+    export function setup({context}) {
+      return {context: ${stringifiedSetupContext} };
+    }
+  </script>`;
 
-  const setupContext = {
-    ..._frontmatterData,
-    content: {
-      frontmatter: _frontmatterData,
-      headers,
-      source: content,
-      html: mdHtml,
-    },
-  };
-
-  // </script> can't be anywhere inside of a JS string, otherwise the HTML parser fails.
-  // Break it up here so that the HTML parser won't detect it.
-  const stringifiedSetupContext = JSON.stringify(setupContext).replace(/\<\/script\>/g, `</scrip" + "t>`);
-
-  return convertHmxToJsx(
-    `<script astro>
-      ${_frontmatterData.layout ? `export const layout = ${JSON.stringify(_frontmatterData.layout)};` : ''}
-      export function setup({context}) {
-        return {context: ${stringifiedSetupContext} };
-      }
-    </script><slot:head></slot:head><slot:body><section>{${JSON.stringify(mdHtml)}}</section></slot:body>`,
-    { compileOptions, filename, fileID }
-  );
+  return convertHmxToJsx(`${mdScriptAstro}<slot:head></slot:head><slot:body><section>{${JSON.stringify(mdHtml)}}</section></slot:body>`, { compileOptions, filename, fileID });
 }
 
 async function transformFromSource(
