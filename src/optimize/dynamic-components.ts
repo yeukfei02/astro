@@ -78,7 +78,7 @@ export default function ({ filename, fileID }: { filename: string; fileID: strin
             }
 
             const url = new URL(componentImportData.specifier, `http://example.com/${fileID}`);
-            const componentUrl = `/__hmx__${url.pathname}`;
+            const componentUrl = `/__hmx__${url.pathname.replace(/\.[^.]+$/, '.js')}`;
 
             node.type = 'Element';
             node.name = 'preact-island';
@@ -106,6 +106,14 @@ export default function ({ filename, fileID }: { filename: string; fileID: strin
           name: 'script',
           children: [],
           attributes: [{
+            type: 'Attribute',
+            name: 'type',
+            value: [{
+              type: 'Text',
+              data: 'module',
+              raw: 'module'
+            }]
+          }, {
             type: 'Attribute',
             name: 'src',
             value: [{

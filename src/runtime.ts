@@ -98,14 +98,14 @@ export async function createRuntime(astroConfig: AstroConfig, logging: LogOption
 
   // Workaround for SKY-251
   const hmxPlugOptions: { resolve?: (s: string) => string } = {};
-  if (existsSync(new URL('./package-lock.json', projectRoot))) {
+  /*if (existsSync(new URL('./package-lock.json', projectRoot))) {
     const pkgLockStr = await readFile(new URL('./package-lock.json', projectRoot), 'utf-8');
     const pkgLock = JSON.parse(pkgLockStr);
     hmxPlugOptions.resolve = (pkgName: string) => {
       const ver = pkgLock.dependencies[pkgName].version;
       return `/_snowpack/pkg/${pkgName}.v${ver}.js`;
     };
-  }
+  }*/
 
   const snowpackConfig = await loadConfiguration({
     root: projectRoot.pathname,
