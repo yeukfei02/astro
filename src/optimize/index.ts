@@ -1,6 +1,7 @@
-import { walk } from 'estree-walker';
 import type { Ast, TemplateNode } from '../compiler/interfaces';
-import { NodeVisitor, Optimizer, VisitorFn } from '../@types/optimizer';
+import type { NodeVisitor, Optimizer, VisitorFn } from '../@types/optimizer';
+
+import { walk } from 'estree-walker';
 
 // Optimizers
 import optimizeStyles from './styles.js';
@@ -84,6 +85,12 @@ export async function optimize(ast: Ast, opts: OptimizeOptions) {
 
   for(const optimizer of optimizers) {
     collectVisitors(optimizer, htmlVisitors, cssVisitors, finalizers);
+  }
+
+  for(const optimizer of optimizers) {
+    if(optimizer.visitors && optimizer.visitors.module) {
+      optimizer.visitors.module.enter(ast.module);
+    }
   }
 
   walkAstWithVisitors(ast.css, cssVisitors);
