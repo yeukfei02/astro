@@ -1,7 +1,7 @@
-<script astro>
+---
   import Banner from '../components/Banner.hmx';
   import Nav from '../components/Nav.hmx';
-</script>
+---
 
 <Banner></Banner>
 <Nav />

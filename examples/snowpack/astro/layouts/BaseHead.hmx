@@ -1,9 +1,9 @@
-<script astro>
+---
   import Banner from '../components/Banner.hmx';
   import Nav from '../components/Nav.hmx';
 
   let props: {title: string, description: string, permalink: string};
-</script>
+---
 
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />

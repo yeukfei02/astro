@@ -1,4 +1,4 @@
-<script astro>
+---
   import Menu from '../components/Menu.hmx';
   import Hero from '../components/Hero.hmx';
   import BaseHead from '../layouts/BaseHead.hmx';
@@ -9,7 +9,7 @@
   export function setup({ context }) {
     return {};
   }
-</script>
+---
 
 <html>
   <head>
