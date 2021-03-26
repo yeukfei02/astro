@@ -70,7 +70,7 @@ export async function build(astroConfig: AstroConfig): Promise<0 | 1> {
         //return 1;
       } else {
         await mkdir(outFolder, { recursive: true });
-        await writeFile(outPath, result.contents, 'utf-8');
+        // await writeFile(outPath, result.contents, 'utf-8');
       }
     } catch (err) {
       error(logging, 'generate', err);

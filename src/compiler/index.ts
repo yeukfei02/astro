@@ -134,7 +134,7 @@ export default __render;
     modJsx += `
 // \`__renderPage()\`: Render the contents of the Astro module as a page. This is a special flow,
 // triggered by loading a component directly by URL.
-export async function __renderPage({request, children, props}) {
+export async function* __renderPage({request, children, props}) {
   const currentChild = {
     setup: typeof setup === 'undefined' ? (passthrough) => passthrough : setup,
     layout: typeof __layout === 'undefined' ? undefined : __layout,

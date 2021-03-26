@@ -19,7 +19,7 @@ interface RuntimeConfig {
 
 type LoadResultSuccess = {
   statusCode: 200;
-  contents: string | Buffer;
+  contents: string | Buffer | Generator<string | Buffer>;
   contentType?: string | false;
 };
 type LoadResultNotFound = { statusCode: 404; error: Error };
@@ -63,7 +63,7 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
 
   try {
     const mod = await snowpackRuntime.importModule(selectedPageUrl);
-    let html = (await mod.exports.__renderPage({
+    let html = (mod.exports.__renderPage({
       request: {
         host: fullurl.hostname,
         path: fullurl.pathname,
@@ -71,16 +71,16 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
       },
       children: [],
       props: {},
-    })) as string;
+    })) as Generator<string>;
 
     // inject styles
     // TODO: handle this in compiler
     const styleTags = Array.isArray(mod.css) && mod.css.length ? mod.css.reduce((markup, url) => `${markup}\n<link rel="stylesheet" type="text/css" href="${url}" />`, '') : ``;
-    if (html.indexOf('</head>') !== -1) {
-      html = html.replace('</head>', `${styleTags}</head>`);
-    } else {
-      html = styleTags + html;
-    }
+    // if (html.indexOf('</head>') !== -1) {
+    //   html = html.replace('</head>', `${styleTags}</head>`);
+    // } else {
+    //   html = styleTags + html;
+    // }
 
     return {
       statusCode: 200,

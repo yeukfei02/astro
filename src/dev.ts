@@ -31,7 +31,17 @@ export default async function (astroConfig: AstroConfig) {
         if (result.contentType) {
           res.setHeader('Content-Type', result.contentType);
         }
-        res.write(result.contents);
+        if ((result.contents as Generator).next) {
+          console.log('AAA'); // 1 3 5 7 9
+          let gen: IteratorResult<string>;
+          do {
+            gen = await ((result.contents as Generator<string>).next());
+            console.log('BBB', gen.value);
+            res.write(gen.value);
+          } while (!gen.done);
+        } else {
+          res.write(result.contents);
+        }
         res.end();
         break;
       }
