@@ -10,7 +10,8 @@
     ".": "./mastro.mjs",
     "./snowpack-plugin": "./snowpack-plugin.cjs",
     "./h": "./lib/h.js",
-    "./render/preact": "./lib/render/preact.js"
+    "./render/preact": "./lib/render/preact.js",
+    "./parser": "./lib/parser/index.js"
   },
   "bin": {
     "astro": "astro.mjs"
@@ -21,7 +22,7 @@
     "lint": "eslint 'src/**/*.{js,ts}'",
     "format": "prettier -w 'src/**/*.{js,ts}'",
     "test": "uvu test -i fixtures -i test-utils.js",
-    "watch:extension": "cd vscode && npm run watch"
+    "build:extension": "cd vscode && npm run build"
   },
   "dependencies": {
     "@babel/generator": "^7.13.9",

@@ -11,11 +11,13 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "astro": "file:../../"
+    "astro": "file:../../../"
   },
   "dependencies": {
+    "vscode-css-languageservice": "^5.1.0",
     "vscode-html-languageservice": "^3.0.3",
     "vscode-languageserver": "^6.1.1",
-    "vscode-languageserver-textdocument": "^1.0.1"
+    "vscode-languageserver-textdocument": "^1.0.1",
+    "es-module-lexer": "^0.4.1"
   }
 }

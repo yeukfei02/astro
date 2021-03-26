@@ -19,7 +19,8 @@
 		"*"
 	],
 	"dependencies": {
-		"vscode-html-languageservice": "^3.0.3"
+		"vscode-html-languageservice": "^3.0.3",
+		"vscode-css-languageservice": "^5.1.0"
 	},
 	"devDependencies": {
 		"esbuild": "0.10.0",

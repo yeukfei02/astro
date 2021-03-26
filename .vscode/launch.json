@@ -11,11 +11,11 @@
 				"--extensionDevelopmentPath=${workspaceRoot}/vscode"
 			],
 			"outFiles": [
-				"${workspaceRoot}/vscode/packages/client/out/**/*.js"
+				"${workspaceRoot}/vscode/dist/**/*.js"
 			],
 			"preLaunchTask": {
 				"type": "npm",
-				"script": "watch:extension"
+				"script": "build:extension"
 			}
 		},
 	]
