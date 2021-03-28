@@ -3,14 +3,21 @@ import htm from 'htm';
 const VOID_ELEMENTS = /^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/;
 
 const parse = (text) => {
-    let count = -1;
+    let buffer = '';
+
+    let braceCount = -1;
+    let fieldsPos = [];
     let inFrontmatter = false;
     let frontmatter = '';
-    let pos = [];
-    let str = '';
 
+    // Statics are all the markup before and after an interpolated { ... } section
     let statics = [];
-    let fields = [];
+    
+    // Interpolations are the contents of an interpolated { ... } section
+    let interpolations = [];
+
+    // Having `statics` and `interpolations` matches the signature of a tagged template literal
+    // htm`<div>${content}</div>` => htm(['<div>', '</div>'], [content])
 
     for (let i = 0; i < text.length - 1; i++) {
         let ch = text[i];
@@ -23,31 +30,39 @@ const parse = (text) => {
             frontmatter += ch;
         }
         if (ch === '{') {
-            count++;
-            if (count === 0) {
-                pos[0] = i + 1;
-                statics.push(str);
-                str = '';
+            // braceCount > 0 means we're seeing "{" inside an interpolated section
+            braceCount++;
+            // braceCount === 0 means we're entering an interpolated section
+            if (braceCount === 0) {
+                fieldsPos[0] = i + 1;
+                statics.push(buffer);
+                buffer = '';
             }
         } else if (ch === '}') {
-            if (count === 0) {
-                pos[1] = i;
-                fields.push(text.slice(...pos));
-                pos = [];
+            // braceCount === 0 means we're closing out an interpolated section
+            if (braceCount === 0) {
+                fieldsPos[1] = i;
+                interpolations.push(text.slice(...fieldsPos));
+                fieldsPos = [];
             }
-            count--;
-        } else if (count < 0 && !inFrontmatter) {
-            str += ch
+            // braceCount > 0 means we're seeing "}" inside an interpolated section
+            braceCount--;
+        } else if (braceCount < 0 && !inFrontmatter) {
+            // track the file contents outside of an interpolated section in a temporary buffer
+            buffer += ch
         }
+        
+        // End of file, push `buffer` to `statics`
         if (i === text.length - 2) {
-            statics.push(str);
+            statics.push(buffer);
         }
     }
 
-    const evalInterpolation = (interpolated) => {
-        return new Function(`${frontmatter}; return (() => { return ${interpolated}})()`)();
+    const evalInterpolation = (i) => {
+        return new Function(`${frontmatter}; return (() => { return ${i}})()`)();
     }
 
+    // Custom `h` function to return an AST from `htm`
     const h = (tag, props, ...children) => {
         if (/^[A-Z]/.test(tag)) {
             return { tag: evalInterpolation(tag), props, children }
@@ -55,10 +70,11 @@ const parse = (text) => {
         return { tag, props, children }
     }
 
-    return htm.bind(h).apply(null, [statics, ...fields.map(interpolated => evalInterpolation(interpolated))]);
+    // `htm` does pretty much all the heavy lifting here
+    return htm.bind(h).apply(null, [statics, ...interpolations.map(i => evalInterpolation(i))]);
 }
 
-const normalizeProps = props => {
+const serializeProps = props => {
     if (!props) return '';
     let str = '';
     for (let [key, value] of Object.entries(props)) {
@@ -70,15 +86,19 @@ const normalizeProps = props => {
 }
 
 export const renderToString = (built) => {
-    return Array.isArray(built) ? built.map((value) => {
-        if (typeof value === 'object') {
-            const { tag, props, children } = value;
-            if (VOID_ELEMENTS.test(tag)) return `<${tag}${normalizeProps(props)}>`;
-            return `<${tag}${normalizeProps(props)}>${renderToString(children)}</${tag}>`;
-        } else if (typeof value === 'string') {
+    if (Array.isArray(built)) {
+        return built.map((value) => {
+            if (typeof value === 'object') {
+                const { tag, props, children } = value;
+                if (VOID_ELEMENTS.test(tag)) return `<${tag}${serializeProps(props)}>`;
+                return `<${tag}${serializeProps(props)}>${renderToString(children)}</${tag}>`;
+            }
+
             return value;
-        }
-    }).join('\n') : renderToString([built]);
+        }).join('\n')
+    }
+
+    return renderToString([built]);
 }
 
 export default parse;
