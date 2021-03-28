@@ -1,0 +1,20 @@
+{
+  "name": "mini-astro",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.mjs",
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "volta": {
+    "node": "14.16.0"
+  },
+  "dependencies": {
+    "htm": "^3.0.4",
+    "prettier": "^2.2.1"
+  }
+}
