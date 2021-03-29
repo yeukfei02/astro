@@ -117,6 +117,9 @@ const parse = (text) => {
   return htm.bind($astro_h).apply(null, [statics, ...interpolations.map((i) => evalInterpolation(i))]);
 };
 
+const isNullish = (value) => (value === false || value === null || value === undefined);
+const isFalsey = (value) => !value;
+
 export const evaluate = (built) => {
   const evaluateAST = (built, ctx = {}) => {
     if (Array.isArray(built)) {
@@ -155,7 +158,7 @@ export const evaluate = (built) => {
         // Do not escape <script> or <style> contents
         if (ctx.parent && ['script', 'style'].includes(ctx.parent.type)) return vnode;
 
-        return sanitize(vnode);
+        if (!isFalsey(vnode)) return sanitize(vnode);
       });
     }
 
@@ -169,7 +172,7 @@ const serializeProps = (props) => {
   if (!props) return '';
   let str = '';
   for (let [key, value] of Object.entries(props)) {
-    if (value === false || value === null || value === undefined || typeof value === 'function') continue;
+    if (isNullish(value) || typeof value === 'function') continue;
     if (typeof value === 'object') value = JSON.stringify(value);
     let quote = typeof value === 'string' && value.indexOf('"') > -1 ? `'` : `"`;
     str += ` ${key}=${quote}${value}${quote}`;
