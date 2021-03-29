@@ -14,7 +14,9 @@
     "node": "14.16.0"
   },
   "dependencies": {
+    "esbuild": "^0.11.0",
     "htm": "^3.0.4",
-    "prettier": "^2.2.1"
+    "prettier": "^2.2.1",
+    "sanitize-html": "^2.3.3"
   }
 }

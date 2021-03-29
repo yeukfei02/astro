@@ -1,5 +1,12 @@
 ---
 const title = 'Testing out this HTM-based compiler!';
+const items = [1, 2, 3];
+
+const CustomLink = ({ text }) => {
+    return <>
+        <a href="https://google.com">{text}</a>
+    </>;
+}
 ---
 
 <html lang={"en"}>
@@ -8,8 +15,37 @@ const title = 'Testing out this HTM-based compiler!';
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+    <style lang="scss">
+        div {
+            color: red;
+        }
+    </style>
+    <script>
+        (function () {
+            console.log('Test!')
+        })()
+    </script>
 </head>
 <body>
-    <div test-boolean ...{{ a: 'a', b: 'b', c: 'c' }} />
+    <div test-boolean test-json={{ x: 'x' }} ...{{ 'test-spread': true }} />
+    
+    <!-- {don't interpolate me} -->
+
+    <CustomLink text="Hello world!" />
+    <CustomLink text="Goodbye cruel world!" />
+
+    <pre><code children="<div>innerHTML is neat!</div>" /></pre>
+
+    <!-- Any element (even Fragment) can support dangerouslySetInnerHTML -->
+    <Fragment dangerouslySetInnerHTML={{ __html: "<div>innerHTML is neat!</div>" }} />
+    <div dangerouslySetInnerHTML={{ __html: "<span>innerHTML is neat!</span>" }} />
+    <div>{"<script>alert('gotcha!')</script>"}</div>
+
+    {items.map(i => <div>{i}</div>)}
+
+    <>
+        <h1>HELLO</h1>
+        <p>WORLD</p>
+    </>
 </body>
 </html>
