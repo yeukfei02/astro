@@ -1,6 +1,7 @@
 ---
 const title = 'Testing out this HTM-based compiler!';
 const items = [1, 2, 3];
+const lang = "en";
 
 const CustomLink = ({ text }) => {
     return <>
@@ -9,8 +10,10 @@ const CustomLink = ({ text }) => {
 }
 ---
 
-<html lang={"en"}>
+<!-- Spread props go outside the interpolation -->
+<html ...{{lang}}>
 <head>
+    <!-- htm doesn't support void elements, they must be self-closing -->
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,25 +30,46 @@ const CustomLink = ({ text }) => {
     </script>
 </head>
 <body>
-    <div test-boolean test-json={{ x: 'x' }} ...{{ 'test-spread': true }} />
-    
+    <!-- Stuff inside of comments should be ignored -->
     <!-- {don't interpolate me} -->
 
+    <!-- Boolean props! JSON props! -->
+    <div test-boolean test-json={{ x: 'x' }} />
+
+    <!-- Fragment shorthand is supported (no imports) -->
+    <>
+        <h1>A</h1>
+        <h2>B</h2>
+    </>
+
+    <!-- Fragment longhand is supported (no imports) -->
+    <Fragment>
+        <h3>C</h3>
+        <h4>D</h4>
+    </Fragment>
+
+    <!-- null/undefined/false props are stripped out, but other falsey values (zero, '') are passed in -->
+    <div empty="" zero={0} falsey={false} nullish={null} missing={undefined} />
+
+    <!-- falsey JSX expressions are stripped, but truthy ones are printed! -->
+    {false && <div>I am not included</div>}
+    {0 && <div>I am not included!</div>}
+    {true && <div>I am included!</div>}
+    {1 && <div>I am included, too!</div>}
+
+    <!-- JSX expressions are evaluated (and the results are parsed!) -->
+    {items.map(i => <div>{i}</div>)}
+
+    <!-- Elements with an uppercase first character are treated as Components -->
     <CustomLink text="Hello world!" />
     <CustomLink text="Goodbye cruel world!" />
 
-    <pre><code children="<div>innerHTML is neat!</div>" /></pre>
-
-    <!-- Any element (even Fragment) can support dangerouslySetInnerHTML -->
+    <!-- Any element or Fragment (good idea? bad idea?) can support dangerouslySetInnerHTML -->
     <Fragment dangerouslySetInnerHTML={{ __html: "<div>innerHTML is neat!</div>" }} />
     <div dangerouslySetInnerHTML={{ __html: "<span>innerHTML is neat!</span>" }} />
+
+    <!-- HTML passed to children is safely escaped, even if it's complex JSX -->
+    <pre><code children="<div>innerHTML is neat!</div>" /></pre>
     <div>{"<scri" + "PT".toLowerCase()}{">"} {"alert('gotcha!')</script>"}</div>
-
-    {items.map(i => <div>{i}</div>)}
-
-    <>
-        <h1>HELLO</h1>
-        <p>WORLD</p>
-    </>
 </body>
 </html>
