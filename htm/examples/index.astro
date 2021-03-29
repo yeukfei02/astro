@@ -39,7 +39,7 @@ const CustomLink = ({ text }) => {
     <!-- Any element (even Fragment) can support dangerouslySetInnerHTML -->
     <Fragment dangerouslySetInnerHTML={{ __html: "<div>innerHTML is neat!</div>" }} />
     <div dangerouslySetInnerHTML={{ __html: "<span>innerHTML is neat!</span>" }} />
-    <div>{"<script>alert('gotcha!')</script>"}</div>
+    <div>{"<scri" + "PT".toLowerCase()}{">"} {"alert('gotcha!')</script>"}</div>
 
     {items.map(i => <div>{i}</div>)}
 
