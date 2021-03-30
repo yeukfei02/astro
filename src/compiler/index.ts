@@ -75,7 +75,7 @@ async function convertMdToJsx(
 
   const raw = `---
   ${imports}
-  ${frontmatterData.layout ? `export const __layout = ${JSON.stringify(frontmatterData.layout)};` : ''}
+  ${frontmatterData.layout ? `import {__renderPage as __layout} from ${JSON.stringify('../../'+frontmatterData.layout)};` : 'const __layout = undefined;'}
   export const __content = ${stringifiedSetupContext};
 ---
 <section>${mdHtml}</section>`;
@@ -144,8 +144,7 @@ export async function __renderPage({request, children, props}) {
 
   // find layout, if one was given.
   if (currentChild.layout) {
-    const layoutComponent = (await import('/_astro/layouts/' + currentChild.layout.replace(/.*layouts\\//, "").replace(/\.astro$/, '.js')));
-    return layoutComponent.__renderPage({
+    return currentChild.layout({
       request,
       props: {content: currentChild.content},
       children: [childBodyResult],
