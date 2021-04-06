@@ -3,9 +3,15 @@ import { Parser } from '../index.js';
 import { whitespace } from '../../utils/patterns.js';
 
 // @ts-ignore
-export default function read_expression(parser: Parser): string {
+export default function read_expression(parser: Parser) {
   try {
-    const start = parser.index;
+    /*
+    const expression = parse_expression_at(parser.template, parser.index);
+    parser.index = expression.end;
+    return expression;
+    */
+
+    let start = parser.index;
     let index = parse_expression_at(parser.template, parser.index);
     let num_parens = 0;
 

@@ -1,7 +1,6 @@
-import type { Expression, Program } from '@babel/types';
 import type { SourceMap } from 'magic-string';
 
-interface BaseNode {
+export interface BaseNode {
   start: number;
   end: number;
   type: string;
