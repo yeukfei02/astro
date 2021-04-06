@@ -24,7 +24,8 @@ export interface JsxItem {
 export interface TransformResult {
   script: string;
   imports: string[];
-  items: JsxItem[];
+  //items: JsxItem[];
+  html: string;
   css?: string;
 }
 
