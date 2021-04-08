@@ -126,15 +126,15 @@ ${result.imports.join('\n')}
 
 // \`__render()\`: Render the contents of the Astro module.
 import { h, Fragment } from '${internalImport('h.js')}';
-async function __render(props, ...children) {
+async function* __render(props, ...children) {
   ${result.script}
-  return h(Fragment, null, ${result.html});
+  ${result.html}
 }
 export default __render;
 
 // \`__renderPage()\`: Render the contents of the Astro module as a page. This is a special flow,
 // triggered by loading a component directly by URL.
-export async function __renderPage({request, children, props}) {
+export async function* __renderPage({request, children, props}) {
   const currentChild = {
     layout: typeof __layout === 'undefined' ? undefined : __layout,
     content: typeof __content === 'undefined' ? undefined : __content,
@@ -142,18 +142,18 @@ export async function __renderPage({request, children, props}) {
   };
 
   import.meta.request = request;
-  const childBodyResult = await currentChild.__render(props, children);
+  const bodyGenerator = currentChild.__render(props, children);
 
   // find layout, if one was given.
   if (currentChild.layout) {
-    return currentChild.layout({
+    yield * currentChild.layout({
       request,
       props: {content: currentChild.content},
-      children: [childBodyResult],
+      children: [bodyGenerator],
     });
   }
 
-  return childBodyResult;
+  yield * bodyGenerator;
 };\n`;
 
   return {

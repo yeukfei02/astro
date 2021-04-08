@@ -44,13 +44,18 @@ function isImportMetaDeclaration(declaration: VariableDeclarator, metaName?: str
   if (metaName && (init.callee.property.type !== 'Identifier' || init.callee.property.name !== metaName)) return false;
   return true;
 }
+function escape(code: string) {
+  return code.replace(/[`$]/g, (match) => {
+    return '\\' + match;
+  });
+}
 
 /** Retrieve attributes from TemplateNode */
-function getAttributes(attrs: Attribute[]): Record<string, string> {
-  let result: Record<string, string> = {};
+function getAttributes(attrs: Attribute[]): Record<string, string|boolean> {
+  let result: Record<string, string|boolean> = {};
   for (const attr of attrs) {
     if (attr.value === true) {
-      result[attr.name] = JSON.stringify(attr.value);
+      result[attr.name] = attr.value;//JSON.stringify(attr.value);
       continue;
     }
     if (attr.value === false || attr.value === undefined) {
@@ -65,7 +70,7 @@ function getAttributes(attrs: Attribute[]): Record<string, string> {
             if (v.content) {
               return v.content;
             } else {
-              return JSON.stringify(getTextFromAttribute(v));
+              return JSON.stringify(escape(getTextFromAttribute(v)));
             }
           })
           .join('+') +
@@ -83,7 +88,7 @@ function getAttributes(attrs: Attribute[]): Record<string, string> {
         continue;
       }
       case 'Text':
-        result[attr.name] = JSON.stringify(getTextFromAttribute(val));
+        result[attr.name] = JSON.stringify(escape(getTextFromAttribute(val)));
         continue;
       default:
         throw new Error(`UNKNOWN: ${val.type}`);
@@ -112,12 +117,16 @@ function getTextFromAttribute(attr: any): string {
 }
 
 /** Convert TemplateNode attributes to string */
-function generateAttributes(attrs: Record<string, string>): string {
-  let result = '{';
+function generateAttributes(attrs: Record<string, string|boolean>): string {
+  let result = '';
   for (const [key, val] of Object.entries(attrs)) {
-    result += JSON.stringify(key) + ':' + val + ',';
+    if(val === true) {
+      result += ' ' + key;
+    } else {
+      result += ' ' + key + '=' + val;
+    }
   }
-  return result + '}';
+  return result;
 }
 
 interface ComponentInfo {
@@ -468,8 +477,157 @@ function compileCss(style: Style, state: CodegenState) {
   });
 }
 
-/** Compile page markup */
+const voidElements = new Set(['area', 'base', 'br', 'col', 'command', 'embed', 
+  'hr', 'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 
+  'track', 'wbr', '!doctype']);
+
 function compileHtml(enterNode: TemplateNode, state: CodegenState, compileOptions: CompileOptions) {
+  const { components, css, importExportStatements, dynamicImports, filename } = state;
+  const { astroConfig } = compileOptions;
+
+  let outSource = '';
+  let collection = '';
+  walk(enterNode, {
+    enter(node: TemplateNode) {
+      switch (node.type) {
+        case 'Expression': {
+          let child = '';
+          if(node.children!.length) {
+            child = compileHtml(node.children![0], state, compileOptions);
+          }
+          let raw = node.codeStart + child + node.codeEnd;
+          // TODO Do we need to compile this now, or should we compile the entire module at the end?
+          let code = compileExpressionSafe(raw).trim().replace(/\;$/, '');
+          //outSource += `,(${code})`;
+
+          // TODO use expressionDepth
+          collection += '${' + code + '}';
+
+          this.skip();
+          break;
+        }
+        case 'MustacheTag':
+        case 'Comment':
+          return;
+        case 'Fragment':
+          break;
+        case 'Slot': {
+          throw new Error('Slot not supported');
+          return;
+        }
+        case 'Head':
+        case 'InlineComponent': {
+          // TODO yield what you got.
+          throw new Error('Inline components not supported');
+          return;
+        }
+        case 'Title':
+        case 'Element': {
+          const name: string = node.name;
+
+          collection += `<${name}`;
+
+          const attributes = getAttributes(node.attributes);
+          const attrString = generateAttributes(attributes);
+
+          collection += attrString;
+          collection += '>';
+
+          return;
+
+
+          //const attributes = getAttributes(node.attributes);
+
+          outSource += outSource === '' ? '' : ',';
+          if (node.type === 'Slot') {
+            outSource += `(children`;
+            return;
+          }
+          const COMPONENT_NAME_SCANNER = /^[A-Z]/;
+          if (!COMPONENT_NAME_SCANNER.test(name)) {
+            outSource += `h("${name}", ${attributes ? generateAttributes(attributes) : 'null'}`;
+            return;
+          }
+          const [componentName, componentKind] = name.split(':');
+          const componentImportData = components[componentName];
+          if (!componentImportData) {
+            throw new Error(`Unknown Component: ${componentName}`);
+          }
+          const { wrapper, wrapperImport } = getComponentWrapper(name, components[componentName], { astroConfig, dynamicImports, filename });
+          if (wrapperImport) {
+            importExportStatements.add(wrapperImport);
+          }
+
+          outSource += `h(${wrapper}, ${attributes ? generateAttributes(attributes) : 'null'}`;
+          return;
+          
+        }
+        case 'Attribute': {
+          this.skip();
+          return;
+        }
+        case 'Style': {
+          css.push(node.content.styles); // if multiple <style> tags, combine together
+          this.skip();
+          return;
+        }
+        case 'Text': {
+          const text = getTextFromAttribute(node);
+          if (!text.trim()) {
+            return;
+          }
+          //collection += JSON.stringify(text);
+          collection += escape(text);
+          return;
+        }
+        default:
+          throw new Error('Unexpected (enter) node type: ' + node.type);
+      }
+    },
+    leave(node, parent, prop, index) {
+      switch (node.type) {
+        case 'Text':
+        case 'Attribute':
+        case 'Comment':
+        case 'Fragment':
+        case 'Expression':
+        case 'MustacheTag':
+          return;
+        case 'Slot': {
+          return;
+        }
+        case 'Head':
+        case 'Body':
+        case 'Title':
+        case 'Element': {
+          if(!voidElements.has(node.name)) {
+            collection += `</${node.name}>`;
+          }
+          return;
+        }
+        case 'InlineComponent':
+          outSource += ')';
+          return;
+        case 'Style': {
+          this.remove(); // this will be optimized in a global CSS file; remove so it‘s not accidentally inlined
+          return;
+        }
+        default:
+          throw new Error('Unexpected (leave) node type: ' + node.type);
+      }
+    },
+  });
+
+  if(collection) {
+    outSource += '\nyield `' + collection + '`;';
+  }
+
+  debugger;
+  return outSource;
+}
+
+/** Compile page markup */
+function compileHtml2(enterNode: TemplateNode, state: CodegenState, compileOptions: CompileOptions) {
   const { components, css, importExportStatements, dynamicImports, filename } = state;
   const { astroConfig } = compileOptions;
 

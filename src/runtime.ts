@@ -6,6 +6,7 @@ import { debug, info } from './logger.js';
 import { searchForPage } from './search.js';
 
 import { existsSync } from 'fs';
+import { Readable } from 'stream';
 import { loadConfiguration, logger as snowpackLogger, startServer as startSnowpackServer } from 'snowpack';
 
 interface RuntimeConfig {
@@ -33,6 +34,14 @@ export type LoadResult = LoadResultSuccess | LoadResultNotFound | LoadResultRedi
 
 // Disable snowpack from writing to stdout/err.
 snowpackLogger.level = 'silent';
+
+async function readStream(stream: Readable) {
+  let out = '';
+  for await(let chunk of stream) {
+    out += chunk;
+  }
+  return out;
+}
 
 /** Pass a URL to Astro to resolve and build */
 async function load(config: RuntimeConfig, rawPathname: string | undefined): Promise<LoadResult> {
@@ -74,7 +83,7 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
   try {
     const mod = await backendSnowpackRuntime.importModule(snowpackURL);
     debug(logging, 'resolve', `${reqPath} -> ${snowpackURL}`);
-    let html = (await mod.exports.__renderPage({
+    let gen = (mod.exports.__renderPage({
       request: {
         host: fullurl.hostname,
         path: fullurl.pathname,
@@ -82,7 +91,12 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
       },
       children: [],
       props: {},
-    })) as string;
+    })) as AsyncGenerator<string, void, unknown>;
+    
+    const stream = Readable.from(gen, { encoding: 'utf-8' });
+
+    // TODO we don't really want to do this.
+    let html = await readStream(stream);
 
     // inject styles
     // TODO: handle this in compiler

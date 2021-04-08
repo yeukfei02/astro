@@ -13,6 +13,7 @@ Basics('Can load page', async ({ runtime }) => {
   assert.equal(result.statusCode, 200);
   const $ = doc(result.contents);
 
+  assert.equal($('title').text(), 'My App');
   assert.equal($('h1').text(), 'Hello world!');
 });
 
