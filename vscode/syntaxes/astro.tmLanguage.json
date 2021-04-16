@@ -241,7 +241,7 @@
 				}
 			},
 			"end": "(<\/)((?i:style))(>)(?:\\s*\\n)?",
-			"__DEFAULT_STYLE_NAME_START__": null,"name": "source.css.embedded.html","__DEFAULT_STYLE_NAME_END__": null,
+			"name": "source.css.embedded.html",
 			"patterns": [
 				{
 					"include": "#tag-stuff"
@@ -256,7 +256,7 @@
 					"end": "(?=<\/(?i:style))",
 					"patterns": [
 						{
-							"__DEFAULT_STYLE_INCLUDE_START__": null,"include": "source.css","__DEFAULT_STYLE_INCLUDE_END__": null
+							"include": "source.css"
 						}
 					]
 				}
@@ -509,7 +509,7 @@
 		}
 	],
 	"repository": {
-        "frontmatter": {
+		"frontmatter": {
 			"begin": "\\A-{3}\\s*$",
 			"contentName": "meta.embedded.block.frontmatter",
 			"patterns": [

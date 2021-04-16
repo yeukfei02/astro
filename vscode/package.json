@@ -22,9 +22,9 @@
 		"vscode-html-languageservice": "^3.0.3"
 	},
 	"devDependencies": {
-		"esbuild": "0.10.0",
 		"@astro-vscode/client": "file:./packages/client",
-		"@astro-vscode/server": "file:./packages/server"
+		"@astro-vscode/server": "file:./packages/server",
+		"esbuild": "0.10.0"
 	},
 	"main": "./dist/index.js",
 	"files": [
