@@ -1,11 +1,23 @@
 import type { ComponentRenderer } from '../../@types/renderer';
 import { createRenderer } from './renderer';
-import type { LitElement } from 'lit';
+import {renderModule} from '@lit-labs/ssr/lib/render-module.js';
+// Execute the above `renderTemplate` in a sandboxed VM with a minimal DOM shim
 
-const Lit: ComponentRenderer<LitElement> = {
-  renderStatic(Element) {
-    return async () => {
-      return 'foo';
+const Lit: ComponentRenderer<string> = {
+  renderStatic(componentUrl, rendererUrl) {
+    return async (props) => {
+      const ssrResult = await (renderModule(
+        rendererUrl,  // Module to load in SSR sandbox
+        import.meta.url,         // Referrer URL for module
+        'renderTemplate',        // Function to call
+        [componentUrl.toString(), props]         // Arguments to function
+      ) as Promise<Iterable<unknown>>);
+
+      let out = '';
+      for(let text of ssrResult) {
+        out += text;
+      }
+      return out;
     };
   },
   render() {

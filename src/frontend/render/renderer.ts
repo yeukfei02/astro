@@ -3,7 +3,7 @@ import { childrenToH } from './utils';
 
 /** Initialize Astro Component renderer for Static and Dynamic components */
 export function createRenderer(renderer: SupportedComponentRenderer) {
-  const _static: StaticRendererGenerator = (Component) => renderer.renderStatic(Component);
+  const _static: StaticRendererGenerator = (Component, ...args) => renderer.renderStatic(Component, ...args);
   const _imports = (context: DynamicRenderContext) => {
     const values = Object.values(renderer.imports ?? {})
       .reduce((acc, v) => {

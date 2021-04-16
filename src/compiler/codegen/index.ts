@@ -257,9 +257,10 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
           wrapperImport: `import {__vue_${kind}} from '${internalImport('render/vue.js')}';`,
         };*/
       }
+      const rendererUrl = new URL('../../frontend/lit-render.js', import.meta.url);
 
       return {
-        wrapper: `__lit_static(${name})`,
+        wrapper: `__lit_static('${new URL(url, currFileUrl)}', '${rendererUrl}')`,
         wrapperImport: `import {__lit_static} from '${internalImport('render/lit.js')}';`,
       };
       break;
@@ -420,21 +421,6 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
     for (const componentImport of componentImports) {
       const importUrl = componentImport.source.value;
       const componentType = extnameComplete(importUrl);
-      let proxyFilename: string | null = null;
-
-      if(componentType === '.lit.js') {
-        const module = `
-          import {render} from '@lit-labs/ssr/lib/render-lit-html.js';
-          import {html} from 'lit';
-          import {template} from '${importUrl}';
-          export const renderTemplate = (props) => {
-            return render(template(props));
-          };
-        `;
-        proxyFilename = importUrl + '.proxy-astro';
-        proxyModules.set(proxyFilename, module);
-        debugger;
-      }
 
       const specifier = componentImport.specifiers[0];
       if (!specifier) continue; // this is unused
@@ -449,12 +435,12 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
       if (plugin) {
         componentPlugins.add(plugin);
       }
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      let importStatement = module.content.slice(componentImport.start!, componentImport.end!);
-      if(proxyFilename) {
-        importStatement = importStatement.replace(importUrl, proxyFilename);
+      // Do not add the import for lit components
+      if(componentType === '.lit.js') {
+        continue;
       }
-      state.importExportStatements.add(importStatement);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      state.importExportStatements.add(module.content.slice(componentImport.start!, componentImport.end!));
     }
     for (const componentImport of componentExports) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

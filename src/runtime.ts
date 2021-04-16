@@ -55,7 +55,6 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
   const searchResult = searchForPage(fullurl, astroRoot);
   if (searchResult.statusCode === 404) {
     try {
-      debugger;
       const result = await frontendSnowpack.loadUrl(reqPath);
 
       // success
@@ -276,7 +275,7 @@ async function createSnowpack(astroConfig: AstroConfig, env: Record<string, any>
     },
     packageOptions: {
       knownEntrypoints: ['preact-render-to-string'],
-      external: ['@vue/server-renderer', 'node-fetch', 'prismjs/components/index.js'],
+      external: ['@vue/server-renderer', 'node-fetch', 'prismjs/components/index.js', '@lit-labs/ssr/lib/render-lit-html.js', '@lit-labs/ssr/lib/render-module.js'],
     },
   });
 

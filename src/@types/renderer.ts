@@ -2,7 +2,6 @@ import type { Component as VueComponent } from 'vue';
 import type { ComponentType as PreactComponent } from 'preact';
 import type { ComponentType as ReactComponent } from 'react';
 import type { SvelteComponent } from 'svelte';
-import type { LitElement } from 'lit';
 
 export interface DynamicRenderContext {
   componentUrl: string;
@@ -28,9 +27,9 @@ export type SupportedComponentRenderer =
   | ComponentRenderer<PreactComponent>
   | ComponentRenderer<ReactComponent>
   | ComponentRenderer<SvelteComponent>
-  | ComponentRenderer<LitElement>;
+  | ComponentRenderer<string>;
 export type StaticRenderer = (props: Record<string, any>, ...children: any[]) => Promise<string>;
-export type StaticRendererGenerator<T = any> = (Component: T) => StaticRenderer;
+export type StaticRendererGenerator<T = any> = (Component: T, ...args: any[]) => StaticRenderer;
 export type DynamicRenderer = (props: Record<string, any>, ...children: any[]) => Promise<string>;
 export type DynamicRendererContext<T = any> = (Component: T, renderContext: DynamicRenderContext) => DynamicRenderer;
 export type DynamicRendererGenerator = (
