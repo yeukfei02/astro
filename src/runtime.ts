@@ -55,6 +55,7 @@ async function load(config: RuntimeConfig, rawPathname: string | undefined): Pro
   const searchResult = searchForPage(fullurl, astroRoot);
   if (searchResult.statusCode === 404) {
     try {
+      debugger;
       const result = await frontendSnowpack.loadUrl(reqPath);
 
       // success

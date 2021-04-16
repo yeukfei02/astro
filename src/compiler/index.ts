@@ -167,5 +167,6 @@ export async function __renderPage({request, children, props}) {
     result,
     contents: modJsx,
     css: result.css,
+    proxyModules: result.proxyModules
   };
 }

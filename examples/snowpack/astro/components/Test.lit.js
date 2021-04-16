@@ -1,6 +1,6 @@
-import { LitElement } from 'lit';
 
-export default class TestEl extends LitElement {
+
+export default class TestEl {
   render() {
     return `
       <div>Hello world</div>

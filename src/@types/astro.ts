@@ -6,7 +6,7 @@ export interface AstroConfigRaw {
   jsx?: string;
 }
 
-export type ValidExtensionPlugins = 'astro' | 'react' | 'preact' | 'svelte' | 'vue';
+export type ValidExtensionPlugins = 'astro' | 'react' | 'preact' | 'svelte' | 'vue' | 'lit';
 
 export interface AstroConfig {
   dist: string;
@@ -28,12 +28,14 @@ export interface TransformResult {
   css?: string;
   /** If this page exports a collection, the JS to be executed as a string */
   createCollection?: string;
+  proxyModules: Map<string, string>;
 }
 
 export interface CompileResult {
   result: TransformResult;
   contents: string;
   css?: string;
+  proxyModules: Map<string, string>;
 }
 
 export type RuntimeMode = 'development' | 'production';

@@ -57,6 +57,7 @@
     "micromark-extension-mdx-jsx": "^0.3.3",
     "moize": "^6.0.1",
     "node-fetch": "^2.6.1",
+    "path-complete-extname": "^1.0.0",
     "picomatch": "^2.2.3",
     "postcss": "^8.2.8",
     "postcss-icss-keyframes": "^0.2.1",

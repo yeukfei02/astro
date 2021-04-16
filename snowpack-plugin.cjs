@@ -1,18 +1,22 @@
 const { readFile } = require('fs').promises;
 
 // Snowpack plugins must be CommonJS :(
-const transformPromise = import('./lib/compiler/index.js');
+const compilerPromise = import('./lib/compiler/index.js');
 
 module.exports = function (snowpackConfig, { resolve, extensions, astroConfig } = {}) {
   return {
     name: 'snowpack-astro',
     knownEntrypoints: [],
     resolve: {
-      input: ['.astro', '.md'],
+      input: ['.astro', '.md', '.proxy-astro'],
       output: ['.js', '.css'],
     },
     async load({ filePath }) {
-      const { compileComponent } = await transformPromise;
+      if(filePath.endsWith('.proxy-astro')) {
+        debugger;
+      }
+
+      const { compileComponent } = await compilerPromise;
       const projectRoot = snowpackConfig.root;
       const contents = await readFile(filePath, 'utf-8');
       const compileOptions = {

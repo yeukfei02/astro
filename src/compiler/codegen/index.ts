@@ -13,8 +13,9 @@ import * as babelTraverse from '@babel/traverse';
 import { ImportDeclaration, ExportNamedDeclaration, VariableDeclarator, Identifier } from '@babel/types';
 import { warn } from '../../logger.js';
 import { fetchContent } from './content.js';
-import { isFetchContent, isImportMetaDeclaration } from './utils.js';
+import { isFetchContent } from './utils.js';
 import { yellow } from 'kleur/colors';
+import extnameComplete from 'path-complete-extname';
 
 const traverse: typeof babelTraverse.default = (babelTraverse.default as any).default;
 const babelGenerator: typeof _babelGenerator =
@@ -127,6 +128,7 @@ const defaultExtensions: Readonly<Record<string, ValidExtensionPlugins>> = {
   '.jsx': 'react',
   '.vue': 'vue',
   '.svelte': 'svelte',
+  '.lit.js': 'lit'
 };
 
 type DynamicImportMap = Map<'vue' | 'react' | 'react-dom' | 'preact', string>;
@@ -136,6 +138,8 @@ interface GetComponentWrapperOptions {
   astroConfig: AstroConfig;
   dynamicImports: DynamicImportMap;
 }
+
+const dynamicKinds = new Set(['load', 'idle', 'visible']);
 
 /** Generate Astro-friendly component import */
 function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo, opts: GetComponentWrapperOptions) {
@@ -164,7 +168,7 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
       };
     }
     case 'preact': {
-      if (['load', 'idle', 'visible'].includes(kind)) {
+      if (dynamicKinds.has(kind)) {
         return {
           wrapper: `__preact_${kind}(${name}, ${JSON.stringify({
             componentUrl: getComponentUrl(),
@@ -183,7 +187,7 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
       };
     }
     case 'react': {
-      if (['load', 'idle', 'visible'].includes(kind)) {
+      if (dynamicKinds.has(kind)) {
         return {
           wrapper: `__react_${kind}(${name}, ${JSON.stringify({
             componentUrl: getComponentUrl(),
@@ -203,7 +207,7 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
       };
     }
     case 'svelte': {
-      if (['load', 'idle', 'visible'].includes(kind)) {
+      if (dynamicKinds.has(kind)) {
         return {
           wrapper: `__svelte_${kind}(${name}, ${JSON.stringify({
             componentUrl: getComponentUrl('.svelte.js'),
@@ -222,7 +226,7 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
       };
     }
     case 'vue': {
-      if (['load', 'idle', 'visible'].includes(kind)) {
+      if (dynamicKinds.has(kind)) {
         return {
           wrapper: `__vue_${kind}(${name}, ${JSON.stringify({
             componentUrl: getComponentUrl('.vue.js'),
@@ -239,6 +243,26 @@ function getComponentWrapper(_name: string, { type, plugin, url }: ComponentInfo
         wrapper: `__vue_static(${name})`,
         wrapperImport: `import {__vue_static} from '${internalImport('render/vue.js')}';`,
       };
+    }
+    case 'lit': {
+      if (dynamicKinds.has(kind)) {
+        /*return {
+          wrapper: `__vue_${kind}(${name}, ${JSON.stringify({
+            componentUrl: getComponentUrl('.vue.js'),
+            componentExport: 'default',
+            frameworkUrls: {
+              vue: dynamicImports.get('vue'),
+            },
+          })})`,
+          wrapperImport: `import {__vue_${kind}} from '${internalImport('render/vue.js')}';`,
+        };*/
+      }
+
+      return {
+        wrapper: `__lit_static(${name})`,
+        wrapperImport: `import {__lit_static} from '${internalImport('render/lit.js')}';`,
+      };
+      break;
     }
     default: {
       throw new Error(`Unknown component type`);
@@ -275,6 +299,10 @@ async function acquireDynamicComponentImports(plugins: Set<ValidExtensionPlugins
         importMap.set('preact', await resolve('preact'));
         break;
       }
+      case 'lit': {
+        // Nothing for now.
+        break;
+      }
     }
   }
   return importMap;
@@ -286,6 +314,7 @@ interface CompileResult {
   script: string;
   componentPlugins: Set<ValidExtensionPlugins>;
   createCollection?: string;
+  proxyModules: Map<string, string>
 }
 
 interface CodegenState {
@@ -305,6 +334,7 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
   const componentExports: ExportNamedDeclaration[] = [];
 
   const contentImports = new Map<string, { spec: string; declarator: string }>();
+  const proxyModules = new Map<string, string>();
 
   let script = '';
   let propsStatement = '';
@@ -389,7 +419,23 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
 
     for (const componentImport of componentImports) {
       const importUrl = componentImport.source.value;
-      const componentType = path.posix.extname(importUrl);
+      const componentType = extnameComplete(importUrl);
+      let proxyFilename: string | null = null;
+
+      if(componentType === '.lit.js') {
+        const module = `
+          import {render} from '@lit-labs/ssr/lib/render-lit-html.js';
+          import {html} from 'lit';
+          import {template} from '${importUrl}';
+          export const renderTemplate = (props) => {
+            return render(template(props));
+          };
+        `;
+        proxyFilename = importUrl + '.proxy-astro';
+        proxyModules.set(proxyFilename, module);
+        debugger;
+      }
+
       const specifier = componentImport.specifiers[0];
       if (!specifier) continue; // this is unused
       // set componentName to default import if used (user), or use filename if no default import (mostly internal use)
@@ -404,7 +450,11 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
         componentPlugins.add(plugin);
       }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      state.importExportStatements.add(module.content.slice(componentImport.start!, componentImport.end!));
+      let importStatement = module.content.slice(componentImport.start!, componentImport.end!);
+      if(proxyFilename) {
+        importStatement = importStatement.replace(importUrl, proxyFilename);
+      }
+      state.importExportStatements.add(importStatement);
     }
     for (const componentImport of componentExports) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -490,6 +540,7 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
     script,
     componentPlugins,
     createCollection: createCollection || undefined,
+    proxyModules
   };
 }
 
@@ -642,7 +693,7 @@ export async function codegen(ast: Ast, { compileOptions, filename }: CodeGenOpt
     dynamicImports: new Map(),
   };
 
-  const { script, componentPlugins, createCollection } = compileModule(ast.module, state, compileOptions);
+  const { script, componentPlugins, createCollection, proxyModules } = compileModule(ast.module, state, compileOptions);
   state.dynamicImports = await acquireDynamicComponentImports(componentPlugins, compileOptions.resolve);
 
   compileCss(ast.css, state);
@@ -655,5 +706,6 @@ export async function codegen(ast: Ast, { compileOptions, filename }: CodeGenOpt
     html,
     css: state.css.length ? state.css.join('\n\n') : undefined,
     createCollection,
+    proxyModules
   };
 }
