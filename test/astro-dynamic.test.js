@@ -31,9 +31,10 @@ DynamicComponents('Loads client-only packages', async ({ runtime }) => {
 DynamicComponents('Can be built', async ({ build }) => {
   try {
     await build();
-    console.log('build complete');
+    assert.ok(true, 'Can build a project with svelte dynamic components');
   } catch(err) {
     console.log(err);
+    assert.ok(false, 'build threw');
   }
 });
 
