@@ -1,6 +1,7 @@
 import type { AstroConfig } from './@types/astro';
 import { join as pathJoin, resolve as pathResolve } from 'path';
 import { existsSync } from 'fs';
+import { pathToFileURL } from 'url';
 
 /** Type util */
 const type = (thing: any): string => (Array.isArray(thing) ? 'Array' : typeof thing);
@@ -70,7 +71,8 @@ export async function loadConfig(rawRoot: string | undefined, configFileName = '
   // load
   let config: any;
   if (existsSync(astroConfigPath)) {
-    config = configDefaults((await import(`file://${astroConfigPath}`)).default);
+    const astroConfigPathNormalized = pathToFileURL(astroConfigPath).href;
+    config = configDefaults((await import(astroConfigPathNormalized)).default);
   } else {
     config = configDefaults();
   }
