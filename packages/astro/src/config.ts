@@ -70,7 +70,7 @@ export async function loadConfig(rawRoot: string | undefined, configFileName = '
   // load
   let config: any;
   if (existsSync(astroConfigPath)) {
-    config = configDefaults((await import(astroConfigPath)).default);
+    config = configDefaults((await import(`file://${astroConfigPath}`)).default);
   } else {
     config = configDefaults();
   }
