@@ -78,7 +78,6 @@
     "yargs-parser": "^20.2.7"
   },
   "devDependencies": {
-    "astro-scripts": "0.0.1",
     "@babel/types": "^7.13.14",
     "@types/babel__code-frame": "^7.0.2",
     "@types/babel__generator": "^7.6.2",
@@ -93,6 +92,7 @@
     "@types/yargs-parser": "^20.2.0",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
+    "astro-scripts": "0.0.1",
     "concurrently": "^6.0.0",
     "del": "^6.0.0",
     "domhandler": "^4.1.0",
