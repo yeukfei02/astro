@@ -24,6 +24,7 @@ export function createAstroSys(getSnapshot: (fileName: string) => DocumentSnapsh
     readDirectory(path, extensions, exclude, include, depth) {
       const extensionsWithAstro = (extensions ?? []).concat(...['.astro']);
       const result = ts.sys.readDirectory(path, extensionsWithAstro, exclude, include, depth);
+      console.log("READ RESULT2...", path, extensionsWithAstro);
       return result;
     },
   };
