@@ -132,6 +132,7 @@ export async function compileComponent(
   { compileOptions, filename, projectRoot }: { compileOptions: CompileOptions; filename: string; projectRoot: string }
 ): Promise<CompileResult> {
   const result = await transformFromSource(source, { compileOptions, filename, projectRoot });
+  const usesMarkdown = !!result.imports.find(spec => spec.indexOf('Markdown') > -1);
 
   // return template
   let modJsx = `
@@ -142,7 +143,7 @@ ${result.imports.join('\n')}
 
 // \`__render()\`: Render the contents of the Astro module.
 import { h, Fragment } from '${internalImport('h.js')}';
-import __astroMarkdownRender from '${internalImport('markdown.js')}';
+${usesMarkdown ? `import __astroMarkdownRender from '${internalImport('markdown.js')}'` : ''};
 const __astroRequestSymbol = Symbol('astro.request');
 async function __render(props, ...children) {
   const Astro = {
