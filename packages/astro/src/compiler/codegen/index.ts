@@ -316,6 +316,7 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
   const componentExports: ExportNamedDeclaration[] = [];
 
   const contentImports = new Map<string, { spec: string; declarator: string }>();
+  const importSpecifierTypes = new Set(['ImportDefaultSpecifier', 'ImportSpecifier']);
 
   let script = '';
   let propsStatement = '';
@@ -422,7 +423,7 @@ function compileModule(module: Script, state: CodegenState, compileOptions: Comp
       if (!specifier) continue; // this is unused
       
       // set componentName to default import if used (user), or use filename if no default import (mostly internal use)
-      const componentName = ['ImportDefaultSpecifier', 'ImportSpecifier'].includes(specifier.type) ? specifier.local.name : path.posix.basename(importUrl, componentType);
+      const componentName = importSpecifierTypes.has(specifier.type) ? specifier.local.name : path.posix.basename(importUrl, componentType);
       const plugin = extensions[componentType] || defaultExtensions[componentType];
       state.components[componentName] = {
         type: componentType,
