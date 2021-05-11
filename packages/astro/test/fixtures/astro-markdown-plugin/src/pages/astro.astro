@@ -1,0 +1,20 @@
+---
+import Markdown from 'astro/components/Markdown.astro';
+import Layout from '../layouts/content.astro';
+---
+
+<Layout>
+  <Markdown>
+    # Hello world!
+
+    thumbs_up :+1:
+    thumbs_down :-1:
+
+    <div id="nest">
+      # Hello world!
+
+      thumbs_up :+1:
+      thumbs_down :-1:
+    </div>
+  </Markdown>
+</Layout>

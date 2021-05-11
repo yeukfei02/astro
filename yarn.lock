@@ -4960,6 +4960,11 @@ gauge@~2.7.3:
     strip-ansi "^3.0.1"
     wide-align "^1.1.0"
 
+gemoji@^6.0.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/gemoji/-/gemoji-6.1.0.tgz#268fbb0c81d1a8c32a4bcc39bdfdd66080ba7ce9"
+  integrity sha512-MOlX3doQ1fsfzxQX8Y+u6bC5Ssc1pBUBIPVyrS69EzKt+5LIZAOm0G5XGVNhwXFgkBF3r+Yk88ONyrFHo8iNFA==
+
 generic-names@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/generic-names/-/generic-names-2.0.1.tgz"
@@ -9779,6 +9784,14 @@ remark-footnotes@^3.0.0:
   dependencies:
     mdast-util-footnote "^0.1.0"
     micromark-extension-footnote "^0.3.0"
+
+remark-gemoji@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/remark-gemoji/-/remark-gemoji-6.0.0.tgz#d7d5896ea280c3ff6d890a010e073eac65f92eb8"
+  integrity sha512-LDW2h6QqNzAbAcOjscgfkJW9/8TGBasBe/ji+3mCxHlJdhF2IEXFSmm/3tdEPP1JJDZ4y+Ea+xlFQ4tOIU9WvA==
+  dependencies:
+    gemoji "^6.0.0"
+    unist-util-visit "^2.0.0"
 
 remark-gfm@^1.0.0:
   version "1.0.0"

@@ -1,5 +1,5 @@
 import 'source-map-support/register.js';
-import type { CompileResult, TransformResult } from '../@types/astro';
+import type { AstroConfig, CompileResult, TransformResult } from '../@types/astro';
 import type { CompileOptions } from '../@types/compiler.js';
 
 import path from 'path';
@@ -47,8 +47,8 @@ async function convertAstroToJsx(template: string, opts: ConvertAstroOptions): P
 /**
  * .md -> .astro source
  */
-export async function convertMdToAstroSource(contents: string): Promise<string> {
-  const { content, frontmatter: { layout, ...frontmatter }, ...data } = renderMarkdown(contents, { mode: '.md' });
+export async function convertMdToAstroSource(contents: string, markdownOptions: AstroConfig['experimental']['markdownOptions']): Promise<string> {
+  const { content, frontmatter: { layout, ...frontmatter }, ...data } = renderMarkdown(contents, { markdownOptions });
   const contentData = {
     ...data,
     frontmatter
@@ -73,7 +73,7 @@ async function convertMdToJsx(
   contents: string,
   { compileOptions, filename, fileID }: { compileOptions: CompileOptions; filename: string; fileID: string }
 ): Promise<TransformResult> {
-  const raw = await convertMdToAstroSource(contents);
+  const raw = await convertMdToAstroSource(contents, compileOptions.astroConfig.experimental.markdownOptions);
   const convertOptions = { compileOptions, filename, fileID };
   return await convertAstroToJsx(raw, convertOptions);
 }
@@ -103,6 +103,7 @@ export async function compileComponent(
 ): Promise<CompileResult> {
   const result = await transformFromSource(source, { compileOptions, filename, projectRoot });
   const usesMarkdown = !!result.imports.find(spec => spec.indexOf('Markdown') > -1);
+  const markdownOptions = compileOptions.astroConfig.experimental?.markdownOptions ?? null;
 
   // return template
   let modJsx = `
@@ -114,6 +115,7 @@ ${result.imports.join('\n')}
 // \`__render()\`: Render the contents of the Astro module.
 import { h, Fragment } from '${internalImport('h.js')}';
 ${usesMarkdown ? `import __astroMarkdownRender from '${internalImport('markdown.js')}'` : ''};
+${usesMarkdown ? `__astroMarkdownRender = __astroMarkdownRender.bind(null, ${JSON.stringify(markdownOptions)});` : ''};
 const __astroRequestSymbol = Symbol('astro.request');
 async function __render(props, ...children) {
   const Astro = {

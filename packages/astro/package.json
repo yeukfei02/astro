@@ -107,7 +107,8 @@
     "@types/sass": "^1.16.0",
     "@types/yargs-parser": "^20.2.0",
     "astro-scripts": "0.0.1",
-    "slash": "^4.0.0"
+    "slash": "^4.0.0",
+    "remark-gemoji": "^6.0.0"
   },
   "engines": {
     "node": ">=14.0.0",

@@ -11,7 +11,13 @@ export function setup(Suite, fixturePath) {
   let runtime, setupError;
 
   Suite.before(async (context) => {
-    const astroConfig = await loadConfig(fileURLToPath(new URL(fixturePath, import.meta.url)));
+    let astroConfig;
+    try {
+      astroConfig = await loadConfig(fileURLToPath(new URL(fixturePath, import.meta.url)));
+    } catch (err) {
+      console.error(err);
+      setupError = err;
+    }
 
     const logging = {
       level: 'error',

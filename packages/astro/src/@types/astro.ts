@@ -8,6 +8,11 @@ export interface AstroConfigRaw {
 
 export type ValidExtensionPlugins = 'astro' | 'react' | 'preact' | 'svelte' | 'vue';
 
+export interface MarkdownPlugin {
+  resolve: string;
+  options?: Record<string, any>;
+}
+
 export interface AstroConfig {
   dist: string;
   projectRoot: URL;
@@ -27,6 +32,18 @@ export interface AstroConfig {
     port: number;
     projectRoot?: string;
   };
+  /** These options are unstable and subject to change at any time */
+  experimental: {
+    /** Control the way that Markdown is rendered with `Markdown` or `.md` pages */
+    markdownOptions?: {
+      /** Toggles support for footnote syntax inside of Markdown (default is `true`) */
+      footnotes?: boolean;
+      /** Toggles support for GitHub-flavored Markdown syntax (default is `true`) */
+      gfm?: boolean;
+      /** Enables extensions of the built-in Markdown handlers */
+      plugins?: (string|MarkdownPlugin)[]
+    }
+  }
 }
 
 export type AstroUserConfig = Omit<AstroConfig, 'buildOptions' | 'devOptions'> & {
