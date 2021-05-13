@@ -19,9 +19,9 @@ module.exports.languages = [
 module.exports.parsers = {
   astro: {
     parse: (text) => {
-      let { html, css, module: frontmatter } = parse(text);
+      let { html, module: frontmatter } = parse(text);
       html = html ? { ...html, text: text.slice(html.start, html.end), isRoot: true } : null;
-      return [frontmatter, html, css].filter((v) => v);
+      return [frontmatter, html].filter((v) => v);
     },
     locStart(node) {
       return node.start;
@@ -72,6 +72,12 @@ const isAstroScript = (node) => node.type === 'concat' && node.parts[0] === '<sc
 const walkDoc = (doc) => {
   let inAstroScript = false;
   const recurse = (node, { parent }) => {
+    // Do not surround expressions with quotes
+    if (typeof node === 'string' && node.indexOf('{') > -1) {
+      const newNode = node.replace(/("\{)/g, '{').replace(/(\}")/g, '}');
+      parent.parts = parent.parts.map(part => part === node ? newNode : part);
+    }
+
     if (node.type === 'concat') {
       if (isAstroScript(node)) {
         inAstroScript = true;
@@ -123,9 +129,20 @@ module.exports.printers = {
     },
     embed(path, print, textToDoc, options) {
       const node = path.getValue();
-      if (node.type === 'Script' && node.context === 'setup') {
-        return concat(['---', hardline, textToDoc(node.content, { ...options, parser: 'typescript' }), '---', hardline, hardline]);
+
+      if (node.type === 'Style') {
+        let lang = 'css';
+        let langAttr = node.attributes.find(attr => attr.name === 'lang');
+        if (langAttr && langAttr.value[0].type === 'Text') {
+          lang = langAttr.value[0].data;
+        }
+        return concat([`<style lang="${lang}">`, hardline, textToDoc(node.content.styles, { ...options, parser: lang }), '</style>']);
       }
+
+      if (node.type === 'Script' && node.context === 'setup') {
+        return concat(['---', hardline, textToDoc(node.content, { ...options,  parser: 'typescript' }), '---', hardline, hardline]);
+      }
+
       if (node.type === 'Fragment' && node.isRoot) {
         const expressions = findExpressionsInAST(node);
         if (expressions.length > 0) {
@@ -144,11 +161,13 @@ module.exports.printers = {
             })
           );
           const html = parts.join('\n');
-          const doc = textToDoc(html, { parser: 'html' });
+          // @ts-ignore
+          const doc = textToDoc(html, { ...options, parser: 'html' });
           walkDoc(doc);
           return doc;
         }
-        return textToDoc(node.text, { parser: 'html' });
+        // @ts-ignore
+        return textToDoc(node.text, { ...options, parser: 'html' });
       }
 
       return null;
