@@ -21,7 +21,7 @@ const Finalize: FC<{ context: any }> = ({ context: { use, projectName } }) => {
         <Text dimColor>{'[ tip ]'}</Text>
         <Box display="flex" marginLeft={1} flexDirection="column">
           <Text>Get started by running</Text>
-          <Text color="#3894FF">cd ./{projectName}</Text>
+          <Text color="#3894FF">cd ./{projectName.replace(/^\.\//, '')}</Text>
           <Text color="#3894FF">{use} start</Text>
         </Box>
       </Box>
