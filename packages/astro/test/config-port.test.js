@@ -1,31 +1,30 @@
 import { fileURLToPath } from 'url';
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
-import { runDevServer } from './helpers.js';
-import { loadConfig } from '#astro/config';
+import { createDevServer } from './helpers.js';
+import { loadConfig } from '../dist/config.js';
 
-const ConfigPort = suite('Config path');
+describe('Config path', () => {
+  const root = new URL('./fixtures/config-port/', import.meta.url);
 
-const root = new URL('./fixtures/config-port/', import.meta.url);
+  test('can be specified in the astro config', async () => {
+    const astroConfig = await loadConfig(fileURLToPath(root));
+    expect(astroConfig.devOptions.port).toBe(3001);
+  });
 
-ConfigPort('can be specified in the astro config', async (context) => {
-  const astroConfig = await loadConfig(fileURLToPath(root));
-  assert.equal(astroConfig.devOptions.port, 3001);
-});
+  test('can be specified via --port flag', async () => {
+    const args = ['--port', '3002'];
+    const proc = createDevServer(root, args);
 
-ConfigPort('can be specified via --port flag', async (context) => {
-  const args = ['--port', '3002'];
-  const process = runDevServer(root, args);
-
-  process.stdout.setEncoding('utf8');
-  for await (const chunk of process.stdout) {
-    if (/Local:/.test(chunk)) {
-      assert.ok(/:3002/.test(chunk), 'Using the right port');
-      break;
+    proc.stdout.setEncoding('utf8');
+    for await (const chunk of proc.stdout) {
+      if (/Local:/.test(chunk)) {
+        // Using the right port
+        expect(/:3002/.test(chunk)).toBeTruthy();
+        break;
+      }
     }
-  }
 
-  process.kill();
+    proc.kill();
+
+    // test will fail if not completed within time
+  });
 });
-
-ConfigPort.run();

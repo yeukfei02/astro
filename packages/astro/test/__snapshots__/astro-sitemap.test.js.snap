@@ -1,0 +1,6 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Sitemap Generation Generates Sitemap correctly 1`] = `
+"<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?><urlset xmlns=\\"http://www.sitemaps.org/schemas/sitemap/0.9\\"><url><loc>https://mysite.dev/episode/fazers/</loc></url><url><loc>https://mysite.dev/episode/rap-snitch-knishes/</loc></url><url><loc>https://mysite.dev/episode/rhymes-like-dimes/</loc></url><url><loc>https://mysite.dev/episodes/</loc></url></urlset>
+"
+`;

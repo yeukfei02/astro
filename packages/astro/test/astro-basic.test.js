@@ -1,19 +1,23 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
 import { doc } from './test-utils.js';
-import { setup } from './helpers.js';
+import { createRuntime } from './helpers.js';
 
-const Basics = suite('Basic test');
+let runtime;
 
-setup(Basics, './fixtures/astro-basic');
+describe('Basic test', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-basic');
+  });
 
-Basics('Can load page', async ({ runtime }) => {
-  const result = await runtime.load('/');
-  if (result.error) throw new Error(result.error);
+  test('Can load page', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  const $ = doc(result.contents);
+    const $ = doc(result.contents);
 
-  assert.equal($('h1').text(), 'Hello world!');
+    expect($('h1').text()).toBe('Hello world!');
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-Basics.run();

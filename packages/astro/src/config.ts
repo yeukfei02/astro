@@ -3,6 +3,7 @@ import type { AstroConfig } from './@types/astro';
 import 'source-map-support/register.js';
 import path from 'path';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 /** Type util */
 const type = (thing: any): string => (Array.isArray(thing) ? 'Array' : typeof thing);
@@ -86,7 +87,7 @@ export async function loadConfig(rawRoot: string | undefined, configFileName = '
   // load
   let config: any;
   if (existsSync(astroConfigPath)) {
-    config = configDefaults((await import(astroConfigPath.href)).default);
+    config = configDefaults((await import(fileURLToPath(astroConfigPath))).default);
   } else {
     config = configDefaults();
   }

@@ -1,52 +1,30 @@
-import { fileURLToPath } from 'url';
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
-import { createRuntime } from '#astro/runtime';
-import { loadConfig } from '#astro/config';
 import { doc } from './test-utils.js';
+import { createRuntime } from './helpers';
 
-const React = suite('React Components');
+let runtime;
 
-let runtime, setupError;
+describe('React Components', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/react-component');
+  });
 
-React.before(async () => {
-  const astroConfig = await loadConfig(fileURLToPath(new URL('./fixtures/react-component', import.meta.url)));
+  test('Can load React', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  const logging = {
-    level: 'error',
-    dest: process.stderr,
-  };
+    const $ = doc(result.contents);
+    expect($('#react-h2').text()).toBe('Hello world!');
+  });
 
-  try {
-    runtime = await createRuntime(astroConfig, { logging });
-  } catch (err) {
-    console.error(err);
-    setupError = err;
-  }
+  test('Can load Vue', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
+
+    const $ = doc(result.contents);
+    expect($('#vue-h2').text()).toBe('Hasta la vista, baby');
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-React.after(async () => {
-  (await runtime) && runtime.shutdown();
-});
-
-React('No error creating the runtime', () => {
-  assert.equal(setupError, undefined);
-});
-
-React('Can load React', async () => {
-  const result = await runtime.load('/');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-  assert.equal($('#react-h2').text(), 'Hello world!');
-});
-
-React('Can load Vue', async () => {
-  const result = await runtime.load('/');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-  assert.equal($('#vue-h2').text(), 'Hasta la vista, baby');
-});
-
-React.run();

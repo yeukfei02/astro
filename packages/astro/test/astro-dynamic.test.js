@@ -1,39 +1,40 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
-import { setup, setupBuild } from './helpers.js';
+import { createBuilder, createRuntime } from './helpers.js';
 
-const DynamicComponents = suite('Dynamic components tests');
+let runtime;
+let builder;
 
-setup(DynamicComponents, './fixtures/astro-dynamic');
-setupBuild(DynamicComponents, './fixtures/astro-dynamic');
+describe('Dynamic components tests', () => {
+  beforeAll(async () => {
+    [runtime, builder] = await Promise.all([createRuntime('./fixtures/astro-dynamic'), createBuilder('./fixtures/astro-dynamic')]);
+  });
 
-DynamicComponents('Loads client-only packages', async ({ runtime }) => {
-  let result = await runtime.load('/');
-  if (result.error) throw new Error(result.error);
+  test('Loads client-only packages', async () => {
+    let result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  // Grab the react-dom import
-  const exp = /import\("(.+?)"\)/g;
-  let match, reactRenderer;
-  while ((match = exp.exec(result.contents))) {
-    if (match[1].includes('renderers/react/client.js')) {
-      reactRenderer = match[1];
+    // Grab the react-dom import
+    const exp = /import\("(.+?)"\)/g;
+    let match, reactRenderer;
+    while ((match = exp.exec(result.contents))) {
+      if (match[1].includes('renderers/react/client.js')) {
+        reactRenderer = match[1];
+      }
     }
-  }
 
-  assert.ok(reactRenderer, 'React renderer is on the page');
+    // test 1: React renderer is on the page
+    expect(reactRenderer).toBeTruthy();
 
-  result = await runtime.load(reactRenderer);
-  assert.equal(result.statusCode, 200, 'Can load react renderer');
+    result = await runtime.load(reactRenderer);
+    // test 2: Can load react renderer
+    expect(result.statusCode).toBe(200);
+  });
+
+  test('Can be built', async () => {
+    await builder.build();
+    expect(true).toBeTruthy();
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-DynamicComponents('Can be built', async ({ build }) => {
-  try {
-    await build();
-    assert.ok(true, 'Can build a project with svelte dynamic components');
-  } catch (err) {
-    console.log(err);
-    assert.ok(false, 'build threw');
-  }
-});
-
-DynamicComponents.run();

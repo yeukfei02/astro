@@ -1,22 +1,21 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
 import { doc } from './test-utils.js';
-import { setup } from './helpers.js';
+import { createRuntime } from './helpers.js';
 
-const Global = suite('Astro.*');
+let runtime;
 
-setup(Global, './fixtures/astro-global');
+describe('Astro.*', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-global');
+  });
 
-Global('Astro.request.url', async (context) => {
-  const result = await context.runtime.load('/');
-  if (result.error) throw new Error(result.error);
+  test('Astro.request.url', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  const $ = doc(result.contents);
-  assert.equal($('#pathname').text(), '/');
-});
+    const $ = doc(result.contents);
+    expect($('#pathname').text()).toBe('/');
+  });
 
-Global('Astro.request.canonicalURL', async (context) => {
-  // given a URL, expect the following canonical URL
   const canonicalURLs = {
     '/': 'https://mysite.dev/',
     '/post/post': 'https://mysite.dev/post/post/',
@@ -25,19 +24,22 @@ Global('Astro.request.canonicalURL', async (context) => {
     '/posts/2': 'https://mysite.dev/posts/2/',
   };
 
-  for (const [url, canonicalURL] of Object.entries(canonicalURLs)) {
-    const result = await context.runtime.load(url);
+  // given a URL, expect the following canonical URL
+  test.each(Object.entries(canonicalURLs))(`Astro.request.canonicalURL: %p`, async (url, canonicalURL) => {
+    const result = await runtime.load(url);
     const $ = doc(result.contents);
-    assert.equal($('link[rel="canonical"]').attr('href'), canonicalURL);
-  }
+    expect($('link[rel="canonical"]').attr('href')).toBe(canonicalURL);
+  });
+
+  test('Astro.site', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
+
+    const $ = doc(result.contents);
+    expect($('#site').attr('href')).toBe('https://mysite.dev');
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-Global('Astro.site', async (context) => {
-  const result = await context.runtime.load('/');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-  assert.equal($('#site').attr('href'), 'https://mysite.dev');
-});
-
-Global.run();

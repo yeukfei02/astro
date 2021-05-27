@@ -1,18 +1,22 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
 import { doc } from './test-utils.js';
-import { setup } from './helpers.js';
+import { createRuntime } from './helpers.js';
 
-const Fallback = suite('Dynamic component fallback');
+let runtime;
 
-setup(Fallback, './fixtures/astro-fallback');
+describe('Dynamic component fallback', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-fallback');
+  });
 
-Fallback('Shows static content', async (context) => {
-  const result = await context.runtime.load('/');
-  if (result.error) throw new Error(result.error);
+  test('Shows static content', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  const $ = doc(result.contents);
-  assert.equal($('#fallback').text(), 'static');
+    const $ = doc(result.contents);
+    expect($('#fallback').text()).toBe('static');
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-Fallback.run();

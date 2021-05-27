@@ -26,7 +26,7 @@ export class Benchmark {
     const time = await this.execute();
 
     if (existsSync(file)) {
-      const raw = await fsPromises.readFile(file, 'utf-8');
+      const raw = await fsPromises.readFile(file, 'utf8');
       const data = JSON.parse(raw);
       if (Math.floor((data.time / time) * 100) > MUST_BE_AT_LEAST_PERC_OF) {
         this.withinPreviousRuns = true;
@@ -58,7 +58,7 @@ export class Benchmark {
       null,
       '  '
     );
-    await fsPromises.writeFile(file, data, 'utf-8');
+    await fsPromises.writeFile(file, data, 'utf8');
   }
 
   async test() {

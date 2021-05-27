@@ -11,7 +11,7 @@
   "scripts": {
     "build": "ENV=production astro-scripts build src/index.tsx",
     "postbuild": "astro-scripts copy \"src/templates/**\" --tgz",
-    "test": "uvu"
+    "test": "jest"
   },
   "files": [
     "dist",

@@ -1,51 +1,29 @@
-import { fileURLToPath } from 'url';
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
-import { loadConfig } from '#astro/config';
-import { createRuntime } from '#astro/runtime';
+import { createRuntime } from './helpers';
 
-const DType = suite('doctype');
+let runtime;
 
-let runtime, setupError;
+describe('<!doctype>', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-doctype');
+  });
 
-DType.before(async () => {
-  try {
-    const astroConfig = await loadConfig(fileURLToPath(new URL('./fixtures/astro-doctype', import.meta.url)));
+  test('Automatically prepends the standards mode doctype', async () => {
+    const result = await runtime.load('/prepend');
+    if (result.error) throw new Error(result.error);
 
-    const logging = {
-      level: 'error',
-      dest: process.stderr,
-    };
+    const html = result.contents.toString('utf8');
+    expect(html).toEqual(expect.stringMatching(new RegExp('^<!doctype html>')));
+  });
 
-    runtime = await createRuntime(astroConfig, { logging });
-  } catch (err) {
-    console.error(err);
-    setupError = err;
-  }
+  test.skip('Preserves user provided doctype', async () => {
+    const result = await runtime.load('/preserve');
+    if (result.error) throw new Error(result.error);
+
+    const html = result.contents.toString('utf8');
+    expect(html).toEqual(expect.stringMatching(new RegExp('^<!doctype HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">')));
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-DType.after(async () => {
-  (await runtime) && runtime.shutdown();
-});
-
-DType('No errors creating a runtime', () => {
-  assert.equal(setupError, undefined);
-});
-
-DType('Automatically prepends the standards mode doctype', async () => {
-  const result = await runtime.load('/prepend');
-  if (result.error) throw new Error(result.error);
-
-  const html = result.contents.toString('utf-8');
-  assert.ok(html.startsWith('<!doctype html>'), 'Doctype always included');
-});
-
-DType.skip('Preserves user provided doctype', async () => {
-  const result = await runtime.load('/preserve');
-  if (result.error) throw new Error(result.error);
-
-  const html = result.contents.toString('utf-8');
-  assert.ok(html.startsWith('<!doctype HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">'), 'Doctype included was preserved');
-});
-
-DType.run();

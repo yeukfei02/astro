@@ -439,6 +439,9 @@ export async function createRuntime(astroConfig: AstroConfig, { mode, logging }:
   return {
     runtimeConfig,
     load: load.bind(null, runtimeConfig),
-    shutdown: () => Promise.all([backendSnowpack.shutdown(), frontendSnowpack.shutdown()]).then(() => void 0),
+    shutdown: () =>
+      Promise.all([backendSnowpack.shutdown(), frontendSnowpack.shutdown()])
+        .then(() => void 0)
+        .catch(() => void 1),
   };
 }

@@ -1,61 +1,66 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
 import { doc } from './test-utils.js';
-import { setup } from './helpers.js';
+import { createRuntime } from './helpers.js';
 
-const Expressions = suite('Expressions');
+let runtime;
 
-setup(Expressions, './fixtures/astro-expr');
+describe('Expressions', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-expr');
+  });
 
-Expressions('Can load page', async ({ runtime }) => {
-  const result = await runtime.load('/');
-  if (result.error) throw new Error(result.error);
+  test('Can load page', async () => {
+    const result = await runtime.load('/');
+    if (result.error) throw new Error(result.error);
 
-  const $ = doc(result.contents);
+    const $ = doc(result.contents);
 
-  for (let col of ['red', 'yellow', 'blue']) {
-    assert.equal($('#' + col).length, 1);
-  }
+    for (let col of ['red', 'yellow', 'blue']) {
+      expect($('#' + col)).toHaveLength(1);
+    }
+  });
+
+  test('Ignores characters inside of strings', async () => {
+    const result = await runtime.load('/strings');
+    if (result.error) throw new Error(result.error);
+
+    const $ = doc(result.contents);
+
+    for (let col of ['red', 'yellow', 'blue']) {
+      expect($('#' + col)).toHaveLength(1);
+    }
+  });
+
+  test('Ignores characters inside of line comments', async () => {
+    const result = await runtime.load('/line-comments');
+    if (result.error) throw new Error(result.error);
+
+    const $ = doc(result.contents);
+
+    for (let col of ['red', 'yellow', 'blue']) {
+      expect($('#' + col)).toHaveLength(1);
+    }
+  });
+
+  test('Ignores characters inside of multiline comments', async () => {
+    const result = await runtime.load('/multiline-comments');
+    if (result.error) throw new Error(result.error);
+
+    const $ = doc(result.contents);
+
+    for (let col of ['red', 'yellow', 'blue']) {
+      expect($('#' + col)).toHaveLength(1);
+    }
+  });
+
+  test('Allows multiple JSX children in mustache', async () => {
+    const result = await runtime.load('/multiple-children');
+    if (result.error) throw new Error(result.error);
+
+    expect(result.contents).toEqual(expect.stringContaining('#f'));
+    expect(result.contents).not.toEqual(expect.stringContaining('#t'));
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-Expressions('Ignores characters inside of strings', async ({ runtime }) => {
-  const result = await runtime.load('/strings');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-
-  for (let col of ['red', 'yellow', 'blue']) {
-    assert.equal($('#' + col).length, 1);
-  }
-});
-
-Expressions('Ignores characters inside of line comments', async ({ runtime }) => {
-  const result = await runtime.load('/line-comments');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-
-  for (let col of ['red', 'yellow', 'blue']) {
-    assert.equal($('#' + col).length, 1);
-  }
-});
-
-Expressions('Ignores characters inside of multiline comments', async ({ runtime }) => {
-  const result = await runtime.load('/multiline-comments');
-  if (result.error) throw new Error(result.error);
-
-  const $ = doc(result.contents);
-
-  for (let col of ['red', 'yellow', 'blue']) {
-    assert.equal($('#' + col).length, 1);
-  }
-});
-
-Expressions('Allows multiple JSX children in mustache', async ({ runtime }) => {
-  const result = await runtime.load('/multiple-children');
-  if (result.error) throw new Error(result.error);
-
-  assert.ok(result.contents.includes('#f') && !result.contents.includes('#t'));
-});
-
-Expressions.run();

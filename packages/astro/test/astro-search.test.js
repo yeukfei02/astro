@@ -1,41 +1,45 @@
-import { suite } from 'uvu';
-import * as assert from 'uvu/assert';
-import { setup } from './helpers.js';
+import { createRuntime } from './helpers.js';
 
-const Search = suite('Search paths');
+let runtime;
 
-setup(Search, './fixtures/astro-basic');
+describe('Search paths', () => {
+  beforeAll(async () => {
+    runtime = await createRuntime('./fixtures/astro-basic');
+  });
 
-Search('Finds the root page', async ({ runtime }) => {
-  const result = await runtime.load('/');
-  assert.equal(result.statusCode, 200);
+  test('Finds the root page', async () => {
+    const result = await runtime.load('/');
+    expect(result.statusCode).toBe(200);
+  });
+
+  test('Matches pathname to filename', async () => {
+    const result = await runtime.load('/news');
+    expect(result.statusCode).toBe(200);
+  });
+
+  test('A URL with a trailing slash can match a folder with an index.astro', async () => {
+    const result = await runtime.load('/nested-astro/');
+    expect(result.statusCode).toBe(200);
+  });
+
+  test('A URL with a trailing slash can match a folder with an index.md', async () => {
+    const result = await runtime.load('/nested-md/');
+    expect(result.statusCode).toBe(200);
+  });
+
+  test('A URL without a trailing slash can redirect to a folder with an index.astro', async () => {
+    const result = await runtime.load('/nested-astro');
+    expect(result.statusCode).toBe(301);
+    expect(result.location).toBe('/nested-astro/');
+  });
+
+  test('A URL without a trailing slash can redirect to a folder with an index.md', async () => {
+    const result = await runtime.load('/nested-md');
+    expect(result.statusCode).toBe(301);
+    expect(result.location).toBe('/nested-md/');
+  });
+
+  afterAll(async () => {
+    await runtime.shutdown();
+  });
 });
-
-Search('Matches pathname to filename', async ({ runtime }) => {
-  const result = await runtime.load('/news');
-  assert.equal(result.statusCode, 200);
-});
-
-Search('A URL with a trailing slash can match a folder with an index.astro', async ({ runtime }) => {
-  const result = await runtime.load('/nested-astro/');
-  assert.equal(result.statusCode, 200);
-});
-
-Search('A URL with a trailing slash can match a folder with an index.md', async ({ runtime }) => {
-  const result = await runtime.load('/nested-md/');
-  assert.equal(result.statusCode, 200);
-});
-
-Search('A URL without a trailing slash can redirect to a folder with an index.astro', async ({ runtime }) => {
-  const result = await runtime.load('/nested-astro');
-  assert.equal(result.statusCode, 301);
-  assert.equal(result.location, '/nested-astro/');
-});
-
-Search('A URL without a trailing slash can redirect to a folder with an index.md', async ({ runtime }) => {
-  const result = await runtime.load('/nested-md');
-  assert.equal(result.statusCode, 301);
-  assert.equal(result.location, '/nested-md/');
-});
-
-Search.run();
