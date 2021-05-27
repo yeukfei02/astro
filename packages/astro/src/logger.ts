@@ -104,7 +104,7 @@ export function error(opts: LogOptions, type: string | null, ...messages: Array<
 }
 
 type LogFn = typeof debug | typeof info | typeof warn | typeof error;
-
+/** table of messages */
 export function table(opts: LogOptions, columns: number[]) {
   return function logTable(logFn: LogFn, ...input: Array<any>) {
     const messages = columns.map((len, i) => padStr(input[i].toString(), len));
@@ -157,7 +157,7 @@ export function trapWarn(cb: (...args: any[]) => void = () => {}) {
   };
   return () => (console.warn = consoleWarn);
 }
-
+/** pad string with ... */
 function padStr(str: string, len: number) {
   const strLen = stringWidth(str);
   if (strLen > len) {

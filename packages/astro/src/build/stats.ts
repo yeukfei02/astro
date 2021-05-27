@@ -17,15 +17,15 @@ interface URLStats {
 
 export type BundleStatsMap = Map<string, BundleStats>;
 export type URLStatsMap = Map<string, URLStats>;
-
+/** Map of URL Stats */
 export function createURLStats(): URLStatsMap {
   return new Map<string, URLStats>();
 }
-
+/** Map of Bundle Stats */
 export function createBundleStats(): BundleStatsMap {
   return new Map<string, BundleStats>();
 }
-
+/** Add to bundle stats */
 export async function addBundleStats(bundleStatsMap: BundleStatsMap, code: string, filename: string) {
   const gzsize = await gzipSize(code);
 
@@ -34,7 +34,7 @@ export async function addBundleStats(bundleStatsMap: BundleStatsMap, code: strin
     gzipSize: gzsize,
   });
 }
-
+/** map Bundle Stats to URL Stats */
 export function mapBundleStatsToURLStats({ urlStats, depTree, bundleStats }: { urlStats: URLStatsMap; depTree: BundleMap; bundleStats: BundleStatsMap }) {
   for (let [srcPath, stats] of bundleStats) {
     for (let url of urlStats.keys()) {
@@ -44,7 +44,7 @@ export function mapBundleStatsToURLStats({ urlStats, depTree, bundleStats }: { u
     }
   }
 }
-
+/** Collect Bundle Stats */
 export async function collectBundleStats(buildState: BuildOutput, depTree: BundleMap): Promise<URLStatsMap> {
   const urlStats = createURLStats();
 
@@ -70,7 +70,7 @@ export async function collectBundleStats(buildState: BuildOutput, depTree: Bundl
 
   return urlStats;
 }
-
+/** Log URL Stats */
 export function logURLStats(logging: LogOptions, urlStats: URLStatsMap) {
   const builtURLs = [...urlStats.keys()].map((url) => url.replace(/index\.html$/, ''));
   builtURLs.sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
