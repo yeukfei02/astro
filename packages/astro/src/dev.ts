@@ -14,7 +14,7 @@ import { stopTimer } from './build/util';
 const hostname = '127.0.0.1';
 
 // Disable snowpack from writing to stdout/err.
-snowpackLogger.level = 'silent';
+//snowpackLogger.level = 'info';
 
 const logging: LogOptions = {
   level: 'debug',
