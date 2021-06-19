@@ -35,7 +35,7 @@ module.exports = (snowpackConfig, { resolvePackageUrl, renderers, astroConfig, m
       * // the original file contents
       * ```
       */
-    async transform({contents, id, fileExt}) {
+    async transform({ contents, id, isSSR, isPackage, fileExt }) {
       if (fileExt === '.js' && /__astro_component\.js/g.test(id)) {
         const rendererServerPackages = renderers.map(({ server }) => server);
         const rendererClientPackages = await Promise.all(renderers.map(({ client }) => resolvePackageUrl(client)));
@@ -44,6 +44,20 @@ let __rendererSources = [${rendererClientPackages.map(pkg => `"${pkg}"`).join(',
 let __renderers = [${rendererServerPackages.map((_, i) => `__renderer_${i}`).join(', ')}];
 ${contents}`;
         return result;
+      }
+
+      if (isSSR && fileExt === '.js' && !isPackage) {
+        return `import Fetch from 'node-fetch';
+if (!globalThis.fetch) {
+  const { Headers, Request, Response, FetchError, AbortError } = Fetch;
+	globalThis.fetch = Fetch.default;
+  globalThis.Headers = Headers;
+  globalThis.Request = Request;
+  globalThis.Response = Response;
+  globalThis.FetchError = FetchError;
+  globalThis.AbortError = AbortError;
+}
+${contents}`
       }
     },
     config(snowpackConfig) {
