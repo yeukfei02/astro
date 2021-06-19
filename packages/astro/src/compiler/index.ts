@@ -113,13 +113,25 @@ import fetch from 'node-fetch';
 // <script astro></script>
 ${result.imports.join('\n')}
 
+globalThis.Astro = {
+  site: new URL('/', ${JSON.stringify(site)}),
+  fetchContent: async (glob) => {
+    const mod = await import('astro/dist/internal/fetch-content.js');
+    const importPaths = await mod.fetchContent({glob, url: import.meta.url, filename: ${JSON.stringify(filename)}});
+    return Promise.all(importPaths.map(async (importPath) => {
+      const mod = await import(importPath);
+      return mod;
+    }));
+  },
+};
+
 // \`__render()\`: Render the contents of the Astro module.
 import { h, Fragment } from 'astro/dist/internal/h.js';
 const __astroRequestSymbol = Symbol('astro.request');
 async function __render(props, ...children) {
   const Astro = {
+    ...globalThis.Astro,
     request: props[__astroRequestSymbol] || {},
-    site: new URL('/', ${JSON.stringify(site)}),
   };
 
   ${result.script}
