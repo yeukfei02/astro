@@ -87,12 +87,12 @@ When using the [Collections API][docs-collections], `collection` is a prop expos
 ```jsx
 export async function createCollection() {
   return {
-    async data({ params }) {
-      // load data
-    },
     pageSize: 25,
     routes: [{ tag: 'movie' }, { tag: 'television' }],
     permalink: ({ params }) => `/tag/${params.tag}`,
+    async props({ params }) {
+      // load data here
+    },
   };
 }
 ```
@@ -101,10 +101,10 @@ When using the [Collections API][docs-collections], `createCollection()` is an a
 
 | Name        |             Type              | Description                                                                                                |
 | :---------- | :---------------------------: | :--------------------------------------------------------------------------------------------------------- |
-| `data`      | `async ({ params }) => any[]` | **Required.** Load an array of data with this function to be returned.                                     |
-| `pageSize`  |           `number`            | Specify number of items per page (default: `25`).                                                          |
 | `routes`    |          `params[]`           | **Required for URL Params.** Return an array of all possible URL `param` values in `{ name: value }` form. |
 | `permalink` |   `({ params }) => string`    | **Required for URL Params.** Given a `param` object of `{ name: value }`, generate the final URL.\*        |
+| `props`      | `async ({ params }) => object` | **Required.** Load data for the page that will get passed to the component as props.                                     |
+| `pageSize`  |           `number`            | Specify number of items per page (default: `25`).                                                          |
 | `rss`       |          [RSS][rss]           | Optional: generate an RSS 2.0 feed from this collection ([docs][rss]).                                     |
 
 _\* Note: don’t create confusing URLs with `permalink`, e.g. rearranging params conditionally based on their values._

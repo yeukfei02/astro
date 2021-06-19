@@ -5,8 +5,8 @@
 Astro Collections help you break up a larger set of data into multiple pages. Examples of use-cases include:
 
 - Pagination: `/posts/1`, `/posts/2`, etc.
-- Grouping content by author: `/author/fred`, `/author/matthew`, etc.
 - Grouping content by some tag: `/tags/red`, `/tags/blue`, etc.
+- Creating individual pages from a dataset: `/author/fred`, `/author/matthew`, etc.
 - Working with remote data
 - Mixing remote and local data
 
@@ -14,29 +14,22 @@ Astro Collections help you break up a larger set of data into multiple pages. Ex
 
 ## Collections API
 
-To create a new Astro Collection, you must do three things:
+To create a new Astro Collection, you must do two things:
 
 1. Create a new file in the `src/pages` directory that starts with the `$` symbol. This is required to enable the Collections API.
 
 - Example: `src/pages/$posts.astro` -> `/posts/1`, `/posts/2`, etc.
 - Example: `src/pages/$tags.astro` -> `/tags/:tag` (or `/tags/:tag/1`)
 
-2. Define and export the `collection` prop: `collection.data` is how you'll access the data for every page in the collection. Astro populates this prop for you automatically. It MUST be named `collection` and it must be exported.
-
-- Example: `export let collection;`
-
-3. Define and export `createCollection` function: this tells Astro how to load and structure your collection data. Check out the examples below for documentation on how it should be implemented. It MUST be named `createCollection` and it must be exported.
+2. Define and export a `createCollection` function: this tells Astro how to load and structure your collection data. Check out the examples below for documentation on how it should be implemented. It MUST be named `createCollection` and it must be exported.
 
 - Example: `export async function createCollection() { /* ... */ }`
-- API Reference: [createCollection][collection-api]
+- API Reference: [createCollection][create-collection-api]
 
 ## Example: Simple Pagination
 
 ```jsx
 ---
-// Define the `collection` prop.
-export let collection: any;
-
 // Define a `createCollection` function.
 export async function createCollection() {
   const allPosts = Astro.fetchContent('../posts/*.md'); // fetch local posts.
@@ -44,18 +37,23 @@ export async function createCollection() {
   return {
     // Because you are not doing anything more than simple pagination,
     // its fine to just return the full set of posts for the collection data.
-    async data() { return allPosts; },
-    // number of posts loaded per page (default: 25)
-    pageSize: 10,
+    async props({paginate}) { 
+      return {
+        // number of posts loaded per page (default: 25)
+        posts: paginate(allPosts, {pageSize: 10}),
+      }; 
+    },
   };
 }
+// Now, you can get posts from your props.
+const {posts, collection} = Astro.props;
 ---
 <html lang="en">
   <head>
     <title>Pagination Example: Page Number {collection.page.current}</title>
   </head>
   <body>
-    {collection.data.map((post) => (
+    {posts.data.map((post) => (
       <h1>{post.title}</h1>
       <time>{formatDate(post.published_at)}</time>
       <a href={post.url}>Read Post</a>
@@ -68,31 +66,26 @@ export async function createCollection() {
 
 ```jsx
 ---
-// In addition to `collection.data` usage illustrated above, the `collection`
-// prop also provides some important metadata for you to use, like: `collection.page`,
-// `collection.url`, `collection.start`, `collection.end`, and `collection.total`.
-// In this example, we'll use these values to do pagination in the template.
-export let collection: any;
+// In addition to getting data, collections will always automatically pass a `collection`
+// prop to the page. This provides important metadata for the collection, such as: 
+// `collection.page`, `collection.url`, `collection.start`, `collection.end`, and `collection.total`.
+// In this example, we'll use these values to add UI for pagination.
 export async function createCollection() { /* See Previous Example */ }
+const {collection} = Astro.props; // Always passed with createCollection is used
 ---
 <html lang="en">
   <head>
-    <title>Pagination Example: Page Number {collection.page.current}</title>
+    <title>Pagination Example: Page Number {collection.pagination.current}</title>
     <link rel="canonical" href={collection.url.current} />
     <link rel="prev" href={collection.url.prev} />
     <link rel="next" href={collection.url.next} />
   </head>
   <body>
     <main>
-      <h5>Results {collection.start + 1}–{collection.end + 1} of {collection.total}</h5>
-      {collection.data.map((post) => (
-        <h1>{post.title}</h1>
-        <time>{formatDate(post.published_at)}</time>
-        <a href={post.url}>Read Post</a>
-      ))}
+      <h5>Results {collection.pagination.start + 1}–{collection.pagination.end + 1} of {collection.pagination.total}</h5>
     </main>
     <footer>
-      <h4>Page {collection.page.current} / {collection.page.last}</h4>
+      <h4>Page {collection.pagination.current} / {collection.pagination.last}</h4>
       <nav class="nav">
         <a class="prev" href={collection.url.prev || '#'}>Prev</a>
         <a class="next" href={collection.url.next || '#'}>Next</a>
@@ -106,9 +99,6 @@ export async function createCollection() { /* See Previous Example */ }
 
 ```jsx
 ---
-// Define the `collection` prop.
-export let collection: any;
-
 // Define a `createCollection` function.
 // In this example, we'll customize the URLs that we generate to
 // create a new page to group every pokemon by first letter of their name.
@@ -127,25 +117,23 @@ export async function createCollection() {
     // `permalink` defines the final URL for each route object defined in `routes`.
     // It should always match the file location (ex: `src/pages/$pokemon.astro`).
     permalink: ({ params }) => `/pokemon/${params.letter}`,
-    // `data` is now responsible for return the data for each page.
+    // `props` is now responsible for return the data for each page.
     // Luckily we had already loaded all of the data at the top of the function,
     // so we just filter the data here to group pages by first letter.
     // If you needed to fetch more data for each page, you can do that here as well.
-    async data({ params }) {
-      return allPokemon.filter((pokemon) => pokemon.name[0] === params.letter);
+    async props({ params }) {
+      return {items: allPokemon.filter((pokemon) => pokemon.name[0] === params.letter)};
     },
-    // Finally, `pageSize` and `pagination` is still on by default. Because
-    // we don't want to paginate the already-grouped pages a second time, we'll
-    // disable pagination.
-    pageSize: 1,
   };
 }
+
+const {collection, items} = Astro.props;
 ---
 <html lang="en">
   <head>
     <title>Pokemon: {collection.params.letter}</head>
   <body>
-    {collection.data.map((pokemon) => (<h1>{pokemon.name}</h1>))}
+    {items.map((pokemon) => (<h1>{pokemon.name}</h1>))}
   </body>
 </html>
 ```
@@ -154,9 +142,6 @@ export async function createCollection() {
 
 ```jsx
 ---
-// Define the `collection` prop.
-export let collection: any;
-
 // Define a `createCollection` function.
 // In this example, we'll create a new page for every single pokemon.
 export async function createCollection() {
@@ -171,24 +156,22 @@ export async function createCollection() {
     }),
     // `permalink` defines the final URL for each route object defined in `routes`.
     permalink: ({ params }) => `/pokemon/${params.name}`,
-    // `data` is now responsible for return the data for each page.
+    // `props` is now responsible for return the data for each page.
     // Luckily we had already loaded all of the data at the top of the function,
     // so we just filter the data here to group pages by first letter.
     // If you needed to fetch more data for each page, you can do that here as well.
-    async data({ params }) {
-      return allPokemon[params.index];
+    async props({ params }) {
+      return {pokemon: allPokemon[params.index]};
     },
-    // Note: The default pageSize is fine because technically only one data object
-    // is ever returned per route. We can set it to "1" in this example for completeness.
-    pageSize: 1,
   };
 }
+const {pokemon} = Astro.props;
 ---
 <html lang="en">
   <head>
-    <title>Pokemon: {collection.params.name}</head>
+    <title>Pokemon: {pokemon.name}</head>
   <body>
-    Who's that pokemon? It's {collection.data.name}!
+    Who's that pokemon? It's {pokemon.name}!
   </body>
 </html>
 ```
@@ -200,12 +183,10 @@ export async function createCollection() {
 ### 📚 Further Reading
 
 - [Fetching data in Astro][docs-data]
-- API Reference: [collection][collection-api]
 - API Reference: [createCollection()][create-collection-api]
 - API Reference: [Creating an RSS feed][create-collection-api]
 
 [docs-data]: ../README.md#-fetching-data
-[collection-api]: ./api.md#collection
 [create-collection-api]: ./api.md#createcollection
 [example-blog]: ../examples/blog
 [fetch-content]: ./api.md#fetchcontent
