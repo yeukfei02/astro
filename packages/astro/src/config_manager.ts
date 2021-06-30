@@ -17,6 +17,7 @@ interface RendererInstance {
   external: string[] | undefined;
   polyfills: string[];
   hydrationPolyfills: string[];
+  jsxImportSource?: string;
 }
 
 const CONFIG_MODULE_BASE_NAME = '__astro_config.js';
@@ -118,11 +119,17 @@ export class ConfigManager {
         knownEntrypoints: raw.knownEntrypoints,
         external: raw.external,
         polyfills: polyfillsNormalized,
-        hydrationPolyfills: hydrationPolyfillsNormalized
+        hydrationPolyfills: hydrationPolyfillsNormalized,
+        jsxImportSource: raw.jsxImportSource
       };
     });
 
     return rendererInstances;
+  }
+
+  async getRenderers(): Promise<RendererInstance[]> {
+    const renderers = await this.buildRendererInstances();
+    return renderers;
   }
 
   async buildSource(contents: string): Promise<string> {
