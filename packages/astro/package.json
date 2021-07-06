@@ -60,6 +60,7 @@
     "acorn": "^7.4.0",
     "astring": "^1.7.4",
     "autoprefixer": "^10.2.5",
+    "babel-plugin-module-resolver": "^4.1.0",
     "cheerio": "^1.0.0-rc.6",
     "del": "^6.0.0",
     "es-module-lexer": "^0.4.1",
@@ -69,7 +70,6 @@
     "fast-xml-parser": "^3.19.0",
     "fdir": "^5.0.0",
     "find-up": "^5.0.0",
-    "unified": "^9.2.1",
     "gzip-size": "^6.0.0",
     "hast-to-hyperscript": "~9.0.0",
     "kleur": "^4.1.4",
@@ -92,6 +92,7 @@
     "source-map-support": "^0.5.19",
     "string-width": "^5.0.0",
     "tiny-glob": "^0.2.8",
+    "unified": "^9.2.1",
     "yargs-parser": "^20.2.7"
   },
   "devDependencies": {
